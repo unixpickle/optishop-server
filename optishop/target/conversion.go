@@ -51,6 +51,18 @@ func MapInfoToLayout(m *MapInfo) *optishop.Layout {
 	return layout
 }
 
+// AddFloorDetails adds FloorDetails to a Floor.
+func AddFloorDetails(src *FloorDetails, dst *optishop.Floor) {
+	dst.Bounds = src.Bounds
+	dst.Obstacles = src.Obstacles
+	for name, loc := range src.Aisles {
+		dst.Zones = append(dst.Zones, &optishop.Zone{
+			Name:     name,
+			Location: loc,
+		})
+	}
+}
+
 func portalTypeForMarker(m *MapMarker) optishop.PortalType {
 	if m.Name == "elevators" {
 		return optishop.Elevator

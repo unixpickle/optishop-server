@@ -21,6 +21,12 @@ func main() {
 
 	layout := target.MapInfoToLayout(mapInfo)
 
+	for i, floor := range layout.Floors {
+		floorDetails, err := target.GetFloorDetails(storeID, mapInfo.FloorMapDetails[i].FloorID)
+		essentials.Must(err)
+		target.AddFloorDetails(floorDetails, floor)
+	}
+
 	data, err := json.Marshal(layout)
 	essentials.Must(err)
 
