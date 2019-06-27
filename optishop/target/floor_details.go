@@ -88,7 +88,7 @@ func parseFloorDetails(data []byte) (*FloorDetails, error) {
 		}
 		result.Aisles[strings.TrimSpace(scrape.Text(text))] = optishop.Point{
 			X: x * xScale,
-			Y: -y * yScale,
+			Y: y * yScale,
 		}
 	}
 
