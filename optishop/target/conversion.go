@@ -2,7 +2,7 @@ package target
 
 import "github.com/unixpickle/optishop-server/optishop"
 
-// Compute a MapInfo into a generic layout containing
+// Convert a MapInfo into a generic layout containing
 // portals and basic zone information.
 //
 // This layout does not include, obstacles, aisle zones,
