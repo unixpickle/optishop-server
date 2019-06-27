@@ -9,7 +9,7 @@ const (
 	Escalator PortalType = "escalator"
 )
 
-// A Layout stores the physical layout of a store.
+// A Layout specifies the physical layout of a store.
 type Layout struct {
 	Floors []Floor
 }
@@ -25,12 +25,21 @@ func (l *Layout) Portal(id int) *Portal {
 	return nil
 }
 
-// A Floor stores the physical layout of a single floor of
-// a store.
+// A Floor specifies the physical layout of a single floor
+// of a store.
 type Floor struct {
 	Name    string
 	Zones   []*Zone
 	Portals []*Portal
+
+	// The containing shape of the floor. Shoppers may not
+	// step outside of this shape (without exiting the
+	// store).
+	Outline Polygon
+
+	// All areas (e.g. shelves) which a shopper cannot
+	// penetrate in a floor.
+	Obstacles []Polygon
 }
 
 // Portal finds the portal with the given ID, or returns
@@ -54,16 +63,14 @@ type Zone struct {
 	//
 	// All coordinates are relative to the floor, and all
 	// distances are to scale within a floor.
-	X float64
-	Y float64
+	Location Point
 }
 
 // A Portal is a means by which a customer can get from
 // one Floor of a Layout to another.
 type Portal struct {
 	// See Zone for documentation on coordinates.
-	X float64
-	Y float64
+	Location Point
 
 	Type PortalType
 
