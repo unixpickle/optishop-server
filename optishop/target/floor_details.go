@@ -2,7 +2,6 @@ package target
 
 import (
 	"bytes"
-	"math"
 	"strconv"
 	"strings"
 
@@ -93,8 +92,6 @@ func parseFloorDetails(data []byte) (*FloorDetails, error) {
 		}
 	}
 
-	centerAisles(result)
-
 	return result, nil
 }
 
@@ -135,39 +132,4 @@ func pathPolygon(elem *html.Node, xScale, yScale float64) (optishop.Polygon, err
 		polygon = append(polygon, optishop.Point{X: val1 * xScale, Y: val2 * yScale})
 	}
 	return polygon, nil
-}
-
-// centerAisles moves the aisle labels from the end of
-// aisles to the middle of them.
-func centerAisles(f *FloorDetails) {
-	newAisles := map[string]optishop.Point{}
-	for name, location := range f.Aisles {
-		var closestObstacle optishop.Polygon
-		var closestPoint int
-		closestDistance := math.Inf(1)
-		for _, obstacle := range f.Obstacles {
-			for i, p := range obstacle {
-				dist := p.Distance(location)
-				if dist < closestDistance {
-					closestDistance = dist
-					closestObstacle = obstacle
-					closestPoint = i
-				}
-			}
-		}
-		if closestObstacle == nil {
-			newAisles[name] = location
-			continue
-		}
-		closestObstacle = closestObstacle.Dedup()
-		point := closestObstacle.PointAt(closestPoint)
-		prevPoint := closestObstacle.PointAt(closestPoint - 1)
-		nextPoint := closestObstacle.PointAt(closestPoint + 1)
-		if prevPoint.Distance(point) > nextPoint.Distance(point) {
-			newAisles[name] = optishop.Midpoint(prevPoint, point)
-		} else {
-			newAisles[name] = optishop.Midpoint(nextPoint, point)
-		}
-	}
-	f.Aisles = newAisles
 }
