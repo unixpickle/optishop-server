@@ -25,6 +25,17 @@ type FloorMap struct {
 	MapMarkers []*MapMarker `json:"mapMarkers"`
 }
 
+// Portals gets the MapMarkers that are portals.
+func (f *FloorMap) Portals() []*MapMarker {
+	var res []*MapMarker
+	for _, m := range f.MapMarkers {
+		if m.Portal() {
+			res = append(res, m)
+		}
+	}
+	return res
+}
+
 // MapMarker is an indicator of some specific location on
 // a specific floor.
 type MapMarker struct {
@@ -36,6 +47,12 @@ type MapMarker struct {
 		CenterY float64 `json:"centerY"`
 		FloorID string  `json:"floorId"`
 	} `json:"location"`
+}
+
+// Portal checks if the map marker is a way to get between
+// floors of the store.
+func (m *MapMarker) Portal() bool {
+	return m.Name == "elevators" || m.Name == "escalators"
 }
 
 // GetMapInfo looks up general map information for a given
@@ -57,8 +74,8 @@ func GetMapInfo(storeID string) (*MapInfo, error) {
 // of pairs of {first_portal, second_portal} where the
 // first floor's map marker is matched to the second's.
 func MatchFloorPortals(first, second *FloorMap) [][2]*MapMarker {
-	markers1 := portalMarkers(first)
-	markers2 := portalMarkers(second)
+	markers1 := first.Portals()
+	markers2 := second.Portals()
 	maxPairs := essentials.MinInt(len(markers1), len(markers2))
 	for numPairs := maxPairs; numPairs > 0; numPairs-- {
 		var bestMatch [][2]*MapMarker
@@ -80,16 +97,6 @@ func MatchFloorPortals(first, second *FloorMap) [][2]*MapMarker {
 		}
 	}
 	return nil
-}
-
-func portalMarkers(f *FloorMap) []*MapMarker {
-	var res []*MapMarker
-	for _, m := range f.MapMarkers {
-		if m.Name == "elevators" || m.Name == "escalators" {
-			res = append(res, m)
-		}
-	}
-	return res
 }
 
 func markerPerms(m []*MapMarker) [][]*MapMarker {

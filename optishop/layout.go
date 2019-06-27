@@ -11,7 +11,7 @@ const (
 
 // A Layout specifies the physical layout of a store.
 type Layout struct {
-	Floors []Floor
+	Floors []*Floor
 }
 
 // Portal finds the portal with the given ID, or returns
