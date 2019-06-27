@@ -64,6 +64,9 @@ type Zone struct {
 	// All coordinates are relative to the floor, and all
 	// distances are to scale within a floor.
 	Location Point
+
+	// If true, this is a place to enter/exit the store.
+	Entrance bool
 }
 
 // A Portal is a means by which a customer can get from
