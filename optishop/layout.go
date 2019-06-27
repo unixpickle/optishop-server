@@ -35,7 +35,7 @@ type Floor struct {
 	// The containing shape of the floor. Shoppers may not
 	// step outside of this shape (without exiting the
 	// store).
-	Outline Polygon
+	Bounds Polygon
 
 	// All areas (e.g. shelves) which a shopper cannot
 	// penetrate in a floor.
