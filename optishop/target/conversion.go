@@ -31,7 +31,7 @@ func MapInfoToLayout(m *MapInfo) *optishop.Layout {
 					X: portalMarker.Location.CenterX,
 					Y: portalMarker.Location.CenterY,
 				},
-				Type: optishop.PortalType(portalMarker.Name),
+				Type: portalTypeForMarker(portalMarker),
 				ID:   len(markerToPortal),
 			}
 			markerToPortal[portalMarker] = portal

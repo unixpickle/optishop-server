@@ -102,7 +102,7 @@ func MatchFloorPortals(first, second *FloorMap) [][2]*MapMarker {
 func markerPerms(m []*MapMarker) [][]*MapMarker {
 	var res [][]*MapMarker
 	for perm := range approb.Perms(len(m)) {
-		var markers []*MapMarker
+		markers := make([]*MapMarker, len(m))
 		for i, j := range perm {
 			markers[i] = m[j]
 		}
