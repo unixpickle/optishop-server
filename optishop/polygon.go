@@ -5,6 +5,14 @@ import (
 	"math/rand"
 )
 
+var randomDirection Point
+
+func init() {
+	theta := rand.Float64() * math.Pi * 2
+	randomDirection.X = math.Cos(theta)
+	randomDirection.Y = math.Sin(theta)
+}
+
 // A Point is a 2-dimensional location in space.
 type Point struct {
 	X float64
@@ -83,10 +91,9 @@ type ray struct {
 }
 
 func randomRay(o Point) *ray {
-	angle := rand.Float64() * math.Pi * 2
 	return &ray{
 		Origin:    o,
-		Direction: Point{X: math.Cos(angle), Y: math.Sin(angle)},
+		Direction: randomDirection,
 	}
 }
 
