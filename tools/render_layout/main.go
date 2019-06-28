@@ -13,6 +13,7 @@ import (
 	"github.com/ajstarks/svgo/float"
 	"github.com/unixpickle/essentials"
 	"github.com/unixpickle/optishop-server/optishop"
+	"github.com/unixpickle/optishop-server/tools"
 )
 
 const MarginFrac = 0.1
@@ -32,9 +33,9 @@ func main() {
 		x, y, curWidth, height := floor.Bounds.Bounds()
 		destX := (width - curWidth) / 2
 
-		drawPolygon(canvas, floor.Bounds, destX-x, destY-y, "fill: white")
+		tools.DrawPolygon(canvas, floor.Bounds, destX-x, destY-y, "fill: white")
 		for _, obstacle := range floor.Obstacles {
-			drawPolygon(canvas, obstacle, destX-x, destY-y, "fill: #d5d5d5")
+			tools.DrawPolygon(canvas, obstacle, destX-x, destY-y, "fill: #d5d5d5")
 		}
 		for _, zone := range floor.Zones {
 			canvas.Text(zone.Location.X+destX-x, zone.Location.Y+destY-y, zone.Name,
@@ -59,13 +60,4 @@ func computeGeometries(layout optishop.Layout) (width, height, margin float64) {
 	height = totalHeight + margin*float64(len(layout.Floors)+1)
 	width = maxWidth + margin*2
 	return
-}
-
-func drawPolygon(canvas *svg.SVG, poly optishop.Polygon, xOff, yOff float64, style string) {
-	var xs, ys []float64
-	for _, p := range poly {
-		xs = append(xs, p.X+xOff)
-		ys = append(ys, p.Y+yOff)
-	}
-	canvas.Polygon(xs, ys, style)
 }

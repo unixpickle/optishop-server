@@ -53,6 +53,17 @@ func (f *Floor) Portal(id int) *Portal {
 	return nil
 }
 
+// Zone finds the zone with the given name, or returns nil
+// if no zone was found.
+func (f *Floor) Zone(name string) *Zone {
+	for _, z := range f.Zones {
+		if z.Name == name {
+			return z
+		}
+	}
+	return nil
+}
+
 // A Zone is an arbitrary location in a store.
 type Zone struct {
 	// If not empty, may be an aisle name or a department
