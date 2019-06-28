@@ -1,6 +1,9 @@
 package optishop
 
-import "math"
+import (
+	"math"
+	"math/rand"
+)
 
 // A Point is a 2-dimensional location in space.
 type Point struct {
@@ -16,6 +19,11 @@ func Midpoint(p1, p2 Point) Point {
 // Distance computes the Euclidean distance from p to p1.
 func (p Point) Distance(p1 Point) float64 {
 	return math.Sqrt(math.Pow(p.X-p1.X, 2) + math.Pow(p.Y-p1.Y, 2))
+}
+
+// Sub subtracts p1 from p and returns the result.
+func (p Point) Sub(p1 Point) Point {
+	return Point{X: p.X - p1.X, Y: p.Y - p1.Y}
 }
 
 // A Polygon is an arbitrary closed path.
@@ -53,4 +61,51 @@ func (p Polygon) PointAt(idx int) Point {
 		idx += len(p)
 	}
 	return p[idx%len(p)]
+}
+
+// Contains checks if the polygon contains a given point.
+func (p Polygon) Contains(p1 Point) bool {
+	p = p.Dedup()
+	numIntersections := 0
+	r := randomRay(p1)
+	for i, start := range p {
+		line := &lineSegment{Start: start, End: p.PointAt(i + 1)}
+		if rayIntersects(r, line) {
+			numIntersections++
+		}
+	}
+	return numIntersections%2 == 1
+}
+
+type ray struct {
+	Origin    Point
+	Direction Point
+}
+
+func randomRay(o Point) *ray {
+	angle := rand.Float64() * math.Pi * 2
+	return &ray{
+		Origin:    o,
+		Direction: Point{X: math.Cos(angle), Y: math.Sin(angle)},
+	}
+}
+
+type lineSegment struct {
+	Start Point
+	End   Point
+}
+
+func rayIntersects(r *ray, l *lineSegment) bool {
+	endToStart := l.End.Sub(l.Start)
+	m11, m12, m21, m22 := r.Direction.X, endToStart.X, r.Direction.Y, endToStart.Y
+
+	// Inverse matrix formula for 2x2 matrices.
+	d := 1 / (m11*m22 - m12*m21)
+	mInv11, mInv12, mInv21, mInv22 := d*m22, -d*m12, -d*m21, d*m11
+
+	invInput := r.Origin.Sub(l.Start)
+	rayExtent := -(mInv11*invInput.X + mInv12*invInput.Y)
+	segmentExtent := mInv21*invInput.X + mInv22*invInput.Y
+
+	return rayExtent > 0 && segmentExtent > 0 && segmentExtent < 1
 }
