@@ -27,6 +27,13 @@ type Connector interface {
 	Connect(a, b Point) Path
 }
 
+// NewConnector creates a concrete implementation of
+// Connector for the given floor plan.
+func NewConnector(f *Floor) Connector {
+	// TODO: dynamic way to compute an ideal raster size.
+	return newRasterConnector(f, 600, 600)
+}
+
 type rasterConnector struct {
 	boundsX      float64
 	boundsY      float64
@@ -128,7 +135,7 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 			return points
 		}
 		for _, newPoint := range r.neighbors(node[len(node)-1]) {
-			if !visited[newPoint] {
+			if !visited[newPoint] && !r.obstructed[r.xyToIndex(newPoint[0], newPoint[1])] {
 				visited[newPoint] = true
 				newNode := append(append([][2]int{}, node...), newPoint)
 				queue = append(queue, newNode)
