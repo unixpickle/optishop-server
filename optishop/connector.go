@@ -59,23 +59,10 @@ func newRasterConnector(floor *Floor, width, height int) *rasterConnector {
 
 		obstructed: make([]bool, width*height),
 	}
-	idx := 0
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			p := res.xyToPoint(x, y)
-			if !floor.Bounds.Contains(p) {
-				res.obstructed[idx] = true
-			} else {
-				for _, poly := range floor.Obstacles {
-					if poly.Contains(p) {
-						res.obstructed[idx] = true
-						break
-					}
-				}
-			}
-			idx++
-		}
-	}
+
+	res.checkBoundaries(floor.Bounds)
+	res.addObstacles(floor.Obstacles)
+
 	return res
 }
 
@@ -146,6 +133,41 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 	return nil
 }
 
+func (r *rasterConnector) checkBoundaries(bounds Polygon) {
+	idx := 0
+	for y := 0; y < r.height; y++ {
+		for x := 0; x < r.width; x++ {
+			p := r.xyToPoint(x, y)
+			if !bounds.Contains(p) {
+				r.obstructed[idx] = true
+			}
+			idx++
+		}
+	}
+}
+
+func (r *rasterConnector) addObstacles(polygons []Polygon) {
+	for _, poly := range polygons {
+		x, y, width, height := poly.Bounds()
+		minX := int(float64(r.width) * (x - r.boundsX) / r.boundsWidth)
+		minY := int(float64(r.height) * (y - r.boundsY) / r.boundsHeight)
+		maxX := int(math.Ceil(float64(r.width) * (x + width - r.boundsX) / r.boundsWidth))
+		maxY := int(math.Ceil(float64(r.height) * (y + height - r.boundsY) / r.boundsHeight))
+		minX = clampDim(minX, r.width)
+		minY = clampDim(minY, r.height)
+		maxX = clampDim(maxX, r.width)
+		maxY = clampDim(maxY, r.height)
+		for i := minY; i <= maxY; i++ {
+			for j := minX; j <= maxX; j++ {
+				point := r.xyToPoint(j, i)
+				if poly.Contains(point) {
+					r.obstructed[j+i*r.width] = true
+				}
+			}
+		}
+	}
+}
+
 func (r *rasterConnector) pointToXY(p Point) (int, int) {
 	x := int(math.Round(float64(r.width) * (p.X - r.boundsX) / r.boundsWidth))
 	y := int(math.Round(float64(r.height) * (p.Y - r.boundsY) / r.boundsHeight))
@@ -179,4 +201,13 @@ func (r *rasterConnector) neighbors(xy [2]int) [][2]int {
 		res = append(res, [2]int{x, y + 1})
 	}
 	return res
+}
+
+func clampDim(x, dim int) int {
+	if x < 0 {
+		return 0
+	} else if x > dim-1 {
+		return dim - 1
+	}
+	return x
 }
