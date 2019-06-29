@@ -40,9 +40,14 @@ func parseFloorDetails(data []byte) (*FloorDetails, error) {
 		return nil, err
 	}
 
-	// TODO: extract this from the SVG itself.
-	xScale := 0.0254
-	yScale := -0.0254
+	content, ok := scrape.Find(parsed, scrape.ById("content"))
+	if !ok {
+		return nil, errors.New("missing 'content' group")
+	}
+	transform, err := parseCoordTransform(scrape.Attr(content, "transform"))
+	if err != nil {
+		return nil, err
+	}
 
 	result := &FloorDetails{Aisles: map[string]optishop.Point{}}
 
@@ -54,7 +59,7 @@ func parseFloorDetails(data []byte) (*FloorDetails, error) {
 	if len(paths) != 1 {
 		return nil, errors.New("expected exactly one wall shape")
 	}
-	result.Bounds, err = pathPolygon(paths[0], xScale, yScale)
+	result.Bounds, err = pathPolygon(paths[0], transform)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +69,7 @@ func parseFloorDetails(data []byte) (*FloorDetails, error) {
 		return nil, errors.New("missing 'Aisle-Shapes' group")
 	}
 	for _, path := range findTag(aisleShapes, "path") {
-		poly, err := pathPolygon(path, xScale, yScale)
+		poly, err := pathPolygon(path, transform)
 		if err != nil {
 			return nil, err
 		}
@@ -86,10 +91,10 @@ func parseFloorDetails(data []byte) (*FloorDetails, error) {
 		if err != nil {
 			return nil, err
 		}
-		result.Aisles[strings.TrimSpace(scrape.Text(text))] = optishop.Point{
-			X: x * xScale,
-			Y: y * yScale,
-		}
+		result.Aisles[strings.TrimSpace(scrape.Text(text))] = transform.Apply(optishop.Point{
+			X: x,
+			Y: y,
+		})
 	}
 
 	return result, nil
@@ -101,7 +106,37 @@ func findTag(elem *html.Node, tag string) []*html.Node {
 	})
 }
 
-func pathPolygon(elem *html.Node, xScale, yScale float64) (optishop.Polygon, error) {
+// A coordTransform is a 2-D transformation matrix in the
+// order defined in the SVG spec.
+type coordTransform [6]float64
+
+func parseCoordTransform(transform string) (*coordTransform, error) {
+	if !strings.HasPrefix(transform, "matrix(") || !strings.HasSuffix(transform, ")") {
+		return nil, errors.New("unsupported transform: " + transform)
+	}
+	comps := strings.Fields(transform[7 : len(transform)-1])
+	if len(comps) != 6 {
+		return nil, errors.New("unexpected term count in transform: " + transform)
+	}
+	var res coordTransform
+	for i, comp := range comps {
+		x, err := strconv.ParseFloat(comp, 64)
+		if err != nil {
+			return nil, errors.New("unexpected term in transform: " + transform)
+		}
+		res[i] = x
+	}
+	return &res, nil
+}
+
+func (c *coordTransform) Apply(p optishop.Point) optishop.Point {
+	return optishop.Point{
+		X: p.X*c[0] + p.Y*c[2] + c[4],
+		Y: p.X*c[1] + p.Y*c[3] + c[5],
+	}
+}
+
+func pathPolygon(elem *html.Node, c *coordTransform) (optishop.Polygon, error) {
 	polygon := optishop.Polygon{}
 	data := scrape.Attr(elem, "d")
 	fields := strings.Fields(data)
@@ -129,7 +164,7 @@ func pathPolygon(elem *html.Node, xScale, yScale float64) (optishop.Polygon, err
 		if err != nil {
 			return nil, err
 		}
-		polygon = append(polygon, optishop.Point{X: val1 * xScale, Y: val2 * yScale})
+		polygon = append(polygon, c.Apply(optishop.Point{X: val1, Y: val2}))
 	}
 	return polygon, nil
 }
