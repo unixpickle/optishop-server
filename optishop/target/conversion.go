@@ -23,6 +23,7 @@ func MapInfoToLayout(m *MapInfo) *optishop.Layout {
 					Y: marker.Location.CenterY,
 				},
 				Entrance: marker.Name == "entrance",
+				Checkout: marker.Name == "checkout",
 			})
 		}
 		for _, portalMarker := range floorMap.Portals() {

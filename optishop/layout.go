@@ -78,6 +78,9 @@ type Zone struct {
 
 	// If true, this is a place to enter/exit the store.
 	Entrance bool
+
+	// If true, this is a place to pay for merchandise.
+	Checkout bool
 }
 
 // A Portal is a means by which a customer can get from
