@@ -130,12 +130,16 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 
 	queue := NewMinHeap()
 	queue.Push(&connectorSearchNode{Point: start}, 0)
-	visited := map[rasterPoint]float64{start: 0}
+	visited := make([]float64, r.width*r.height)
+	for i := range visited {
+		visited[i] = -1
+	}
+	visited[r.pointToIndex(start)] = 0
 
 	for queue.Len() > 0 {
 		rawNode, distance := queue.Pop()
 		node := rawNode.(*connectorSearchNode)
-		if visited[node.Point] < distance {
+		if visited[r.pointToIndex(node.Point)] < distance {
 			continue
 		}
 
@@ -152,8 +156,9 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 
 		r.nearbyPoints(node.Point, func(newPoint rasterPoint) {
 			newDist := dists.Distance(node.Point, newPoint) + distance
-			if d, ok := visited[newPoint]; !ok || d > newDist {
-				visited[newPoint] = newDist
+			newIdx := r.pointToIndex(newPoint)
+			if d := visited[newIdx]; d == -1 || d > newDist {
+				visited[newIdx] = newDist
 				newNode := &connectorSearchNode{Point: newPoint, Parent: node}
 				queue.Push(newNode, newDist)
 			}
