@@ -30,8 +30,18 @@ type Connector interface {
 // NewConnector creates a concrete implementation of
 // Connector for the given floor plan.
 func NewConnector(f *Floor) Connector {
-	// TODO: dynamic way to compute an ideal raster size.
-	return newRasterConnector(f, 600, 600)
+	// The raster size must preserve the same aspect ratio
+	// so that diagonal lines are really the correct
+	// length.
+	_, _, w, h := f.Bounds.Bounds()
+	if w > h {
+		h *= 600 / w
+		w = 600
+	} else {
+		w *= 600 / h
+		h = 600
+	}
+	return newRasterConnector(f, int(math.Ceil(w)), int(math.Ceil(h)))
 }
 
 type rasterPoint struct {
@@ -108,27 +118,38 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 	start := r.pointToRaster(r.Unobstruct(a))
 	end := r.pointToRaster(r.Unobstruct(b))
 
-	// TODO: use a priority queue here so that we can use
-	// Euclidean distance instead of L1 distance.
-	queue := [][]rasterPoint{{start}}
-	visited := map[rasterPoint]bool{start: true}
+	queue := NewMinHeap()
+	queue.Push([]rasterPoint{start}, 0)
+	visited := map[rasterPoint]bool{}
 
-	for len(queue) > 0 {
-		node := queue[0]
-		queue = queue[1:]
-		if node[len(node)-1] == end {
+	for queue.Len() > 0 {
+		rawNode, distance := queue.Pop()
+		node := rawNode.([]rasterPoint)
+		currentPoint := node[len(node)-1]
+		if visited[currentPoint] {
+			continue
+		}
+		visited[currentPoint] = true
+
+		if currentPoint == end {
 			points := Path{a}
-			for _, xy := range node {
-				points = append(points, r.rasterToPoint(xy))
+			for _, rp := range node {
+				points = append(points, r.rasterToPoint(rp))
 			}
 			points = append(points, b)
 			return points
 		}
-		for _, newPoint := range r.neighbors(node[len(node)-1]) {
-			if !visited[newPoint] && !r.obstructed[r.pointToIndex(newPoint)] {
-				visited[newPoint] = true
+
+		for _, newPoint := range r.neighbors(currentPoint) {
+			if !r.obstructed[r.pointToIndex(newPoint)] {
 				newNode := append(append([]rasterPoint{}, node...), newPoint)
-				queue = append(queue, newNode)
+				queue.Push(newNode, distance+1)
+			}
+		}
+		for _, newPoint := range r.diagonalNeighbors(currentPoint) {
+			if !r.obstructed[r.pointToIndex(newPoint)] {
+				newNode := append(append([]rasterPoint{}, node...), newPoint)
+				queue.Push(newNode, distance+math.Sqrt2)
 			}
 		}
 	}
@@ -203,6 +224,23 @@ func (r *rasterConnector) neighbors(p rasterPoint) []rasterPoint {
 	}
 	if p.Y+1 < r.height {
 		res = append(res, rasterPoint{X: p.X, Y: p.Y + 1})
+	}
+	return res
+}
+
+func (r *rasterConnector) diagonalNeighbors(p rasterPoint) []rasterPoint {
+	res := make([]rasterPoint, 0, 4)
+	if p.X > 0 && p.Y > 0 {
+		res = append(res, rasterPoint{X: p.X - 1, Y: p.Y - 1})
+	}
+	if p.X > 0 && p.Y+1 < r.height {
+		res = append(res, rasterPoint{X: p.X - 1, Y: p.Y + 1})
+	}
+	if p.X+1 < r.width && p.Y > 0 {
+		res = append(res, rasterPoint{X: p.X + 1, Y: p.Y - 1})
+	}
+	if p.X+1 < r.width && p.Y+1 < r.height {
+		res = append(res, rasterPoint{X: p.X + 1, Y: p.Y + 1})
 	}
 	return res
 }
