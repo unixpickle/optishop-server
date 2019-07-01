@@ -34,6 +34,11 @@ func NewConnector(f *Floor) Connector {
 	return newRasterConnector(f, 600, 600)
 }
 
+type rasterPoint struct {
+	X int
+	Y int
+}
+
 type rasterConnector struct {
 	boundsX      float64
 	boundsY      float64
@@ -67,23 +72,23 @@ func newRasterConnector(floor *Floor, width, height int) *rasterConnector {
 }
 
 func (r *rasterConnector) Obstructed(p Point) bool {
-	x, y := r.pointToXY(p)
-	if x < 0 || y < 0 || x >= r.width || y >= r.height {
+	rp := r.pointToRaster(p)
+	if rp.X < 0 || rp.Y < 0 || rp.X >= r.width || rp.Y >= r.height {
 		return true
 	}
-	return r.obstructed[r.xyToIndex(x, y)]
+	return r.obstructed[r.pointToIndex(rp)]
 }
 
 func (r *rasterConnector) Unobstruct(p Point) Point {
 	// Basic BFS to find the nearest point in L1 distance.
-	x, y := r.pointToXY(p)
-	queue := [][2]int{[2]int{x, y}}
-	visited := map[[2]int]bool{queue[0]: true}
+	start := r.pointToRaster(p)
+	queue := []rasterPoint{start}
+	visited := map[rasterPoint]bool{start: true}
 	for len(queue) > 0 {
 		next := queue[0]
 		queue = queue[1:]
-		if !r.obstructed[r.xyToIndex(next[0], next[1])] {
-			return r.xyToPoint(next[0], next[1])
+		if !r.obstructed[r.pointToIndex(next)] {
+			return r.rasterToPoint(next)
 		}
 		for _, newPoint := range r.neighbors(next) {
 			if !visited[newPoint] {
@@ -100,15 +105,13 @@ func (r *rasterConnector) Unobstruct(p Point) Point {
 }
 
 func (r *rasterConnector) Connect(a, b Point) Path {
-	x, y := r.pointToXY(r.Unobstruct(a))
-	start := [2]int{x, y}
-	x, y = r.pointToXY(r.Unobstruct(b))
-	end := [2]int{x, y}
+	start := r.pointToRaster(r.Unobstruct(a))
+	end := r.pointToRaster(r.Unobstruct(b))
 
 	// TODO: use a priority queue here so that we can use
 	// Euclidean distance instead of L1 distance.
-	queue := [][][2]int{{start}}
-	visited := map[[2]int]bool{start: true}
+	queue := [][]rasterPoint{{start}}
+	visited := map[rasterPoint]bool{start: true}
 
 	for len(queue) > 0 {
 		node := queue[0]
@@ -116,15 +119,15 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 		if node[len(node)-1] == end {
 			points := Path{a}
 			for _, xy := range node {
-				points = append(points, r.xyToPoint(xy[0], xy[1]))
+				points = append(points, r.rasterToPoint(xy))
 			}
 			points = append(points, b)
 			return points
 		}
 		for _, newPoint := range r.neighbors(node[len(node)-1]) {
-			if !visited[newPoint] && !r.obstructed[r.xyToIndex(newPoint[0], newPoint[1])] {
+			if !visited[newPoint] && !r.obstructed[r.pointToIndex(newPoint)] {
 				visited[newPoint] = true
-				newNode := append(append([][2]int{}, node...), newPoint)
+				newNode := append(append([]rasterPoint{}, node...), newPoint)
 				queue = append(queue, newNode)
 			}
 		}
@@ -137,7 +140,7 @@ func (r *rasterConnector) checkBoundaries(bounds Polygon) {
 	idx := 0
 	for y := 0; y < r.height; y++ {
 		for x := 0; x < r.width; x++ {
-			p := r.xyToPoint(x, y)
+			p := r.rasterToPoint(rasterPoint{X: x, Y: y})
 			if !bounds.Contains(p) {
 				r.obstructed[idx] = true
 			}
@@ -159,46 +162,47 @@ func (r *rasterConnector) addObstacles(polygons []Polygon) {
 		maxY = clampDim(maxY, r.height)
 		for i := minY; i <= maxY; i++ {
 			for j := minX; j <= maxX; j++ {
-				point := r.xyToPoint(j, i)
-				if poly.Contains(point) {
-					r.obstructed[j+i*r.width] = true
+				rp := rasterPoint{X: j, Y: i}
+				p := r.rasterToPoint(rp)
+				if poly.Contains(p) {
+					r.obstructed[r.pointToIndex(rp)] = true
 				}
 			}
 		}
 	}
 }
 
-func (r *rasterConnector) pointToXY(p Point) (int, int) {
-	x := int(math.Round(float64(r.width) * (p.X - r.boundsX) / r.boundsWidth))
-	y := int(math.Round(float64(r.height) * (p.Y - r.boundsY) / r.boundsHeight))
-	return x, y
+func (r *rasterConnector) pointToRaster(p Point) rasterPoint {
+	return rasterPoint{
+		X: int(math.Round(float64(r.width) * (p.X - r.boundsX) / r.boundsWidth)),
+		Y: int(math.Round(float64(r.height) * (p.Y - r.boundsY) / r.boundsHeight)),
+	}
 }
 
-func (r *rasterConnector) xyToPoint(x, y int) Point {
+func (r *rasterConnector) rasterToPoint(p rasterPoint) Point {
 	return Point{
-		X: (float64(x)/float64(r.width))*r.boundsWidth + r.boundsX,
-		Y: (float64(y)/float64(r.height))*r.boundsHeight + r.boundsY,
+		X: (float64(p.X)/float64(r.width))*r.boundsWidth + r.boundsX,
+		Y: (float64(p.Y)/float64(r.height))*r.boundsHeight + r.boundsY,
 	}
 }
 
-func (r *rasterConnector) xyToIndex(x, y int) int {
-	return x + y*r.width
+func (r *rasterConnector) pointToIndex(p rasterPoint) int {
+	return p.X + p.Y*r.width
 }
 
-func (r *rasterConnector) neighbors(xy [2]int) [][2]int {
-	res := make([][2]int, 0, 4)
-	x, y := xy[0], xy[1]
-	if x > 0 {
-		res = append(res, [2]int{x - 1, y})
+func (r *rasterConnector) neighbors(p rasterPoint) []rasterPoint {
+	res := make([]rasterPoint, 0, 4)
+	if p.X > 0 {
+		res = append(res, rasterPoint{X: p.X - 1, Y: p.Y})
 	}
-	if y > 0 {
-		res = append(res, [2]int{x, y - 1})
+	if p.Y > 0 {
+		res = append(res, rasterPoint{X: p.X, Y: p.Y - 1})
 	}
-	if x+1 < r.width {
-		res = append(res, [2]int{x + 1, y})
+	if p.X+1 < r.width {
+		res = append(res, rasterPoint{X: p.X + 1, Y: p.Y})
 	}
-	if y+1 < r.height {
-		res = append(res, [2]int{x, y + 1})
+	if p.Y+1 < r.height {
+		res = append(res, rasterPoint{X: p.X, Y: p.Y + 1})
 	}
 	return res
 }
