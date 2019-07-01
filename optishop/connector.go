@@ -129,36 +129,35 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 	dists := newRasterDistances()
 
 	queue := NewMinHeap()
-	queue.Push([]rasterPoint{start}, 0)
+	queue.Push(&connectorSearchNode{Point: start}, 0)
 	visited := map[rasterPoint]float64{start: 0}
 
 	for queue.Len() > 0 {
 		rawNode, distance := queue.Pop()
-		node := rawNode.([]rasterPoint)
-		currentPoint := node[len(node)-1]
-		if visited[currentPoint] < distance {
+		node := rawNode.(*connectorSearchNode)
+		if visited[node.Point] < distance {
 			continue
 		}
 
-		if currentPoint == end {
-			points := Path{a}
-			for _, rp := range node {
-				points = append(points, r.rasterToPoint(rp))
+		if node.Point == end {
+			points := Path{b}
+			for node != nil {
+				points = append(points, r.rasterToPoint(node.Point))
+				node = node.Parent
 			}
-			points = append(points, b)
+			points = append(points, a)
+			essentials.Reverse(points)
 			return points
 		}
 
-		for _, newPoint := range r.nearbyPoints(currentPoint) {
-			if !r.obstructed[r.pointToIndex(newPoint)] {
-				newDist := dists.Distance(currentPoint, newPoint) + distance
-				if d, ok := visited[newPoint]; !ok || d > newDist {
-					visited[newPoint] = newDist
-					newNode := append(append([]rasterPoint{}, node...), newPoint)
-					queue.Push(newNode, newDist)
-				}
+		r.nearbyPoints(node.Point, func(newPoint rasterPoint) {
+			newDist := dists.Distance(node.Point, newPoint) + distance
+			if d, ok := visited[newPoint]; !ok || d > newDist {
+				visited[newPoint] = newDist
+				newNode := &connectorSearchNode{Point: newPoint, Parent: node}
+				queue.Push(newNode, newDist)
 			}
-		}
+		})
 	}
 
 	return nil
@@ -237,12 +236,11 @@ func (r *rasterConnector) neighbors(p rasterPoint) []rasterPoint {
 
 // nearbyPoints finds a small square neighborhood of
 // points around p that definitely are not blocked by
-// obstacles and can be reached directly.
-func (r *rasterConnector) nearbyPoints(p rasterPoint) []rasterPoint {
-	var res []rasterPoint
+// obstacles and can be reached directly, and calls f for
+// each such point.
+func (r *rasterConnector) nearbyPoints(p rasterPoint, f func(rasterPoint)) {
 	hitObstacle := false
 	for delta := 1; delta <= maxNearbyDelta && !hitObstacle; delta++ {
-		var pointRing []rasterPoint
 		for i := -delta; i <= delta; i++ {
 			for _, j := range []int{-delta, delta} {
 				p1 := rasterPoint{X: p.X + i, Y: p.Y + j}
@@ -254,15 +252,13 @@ func (r *rasterConnector) nearbyPoints(p rasterPoint) []rasterPoint {
 					if r.obstructed[r.pointToIndex(rp)] {
 						hitObstacle = true
 					} else {
-						res = append(res, rp)
+						f(rp)
 					}
 				}
 
 			}
 		}
-		res = append(res, pointRing...)
 	}
-	return res
 }
 
 func clampDim(x, dim int) int {
@@ -293,4 +289,9 @@ func newRasterDistances() *rasterDistances {
 
 func (r *rasterDistances) Distance(p1, p2 rasterPoint) float64 {
 	return r.table[essentials.AbsInt(p1.X-p2.X)][essentials.AbsInt(p1.Y-p2.Y)]
+}
+
+type connectorSearchNode struct {
+	Point  rasterPoint
+	Parent *connectorSearchNode
 }
