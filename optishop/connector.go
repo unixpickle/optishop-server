@@ -120,16 +120,15 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 
 	queue := NewMinHeap()
 	queue.Push([]rasterPoint{start}, 0)
-	visited := map[rasterPoint]bool{}
+	visited := map[rasterPoint]float64{start: 0}
 
 	for queue.Len() > 0 {
 		rawNode, distance := queue.Pop()
 		node := rawNode.([]rasterPoint)
 		currentPoint := node[len(node)-1]
-		if visited[currentPoint] {
+		if visited[currentPoint] < distance {
 			continue
 		}
-		visited[currentPoint] = true
 
 		if currentPoint == end {
 			points := Path{a}
@@ -140,16 +139,15 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 			return points
 		}
 
-		for _, newPoint := range r.neighbors(currentPoint) {
+		for _, newPoint := range r.nearbyPoints(currentPoint) {
 			if !r.obstructed[r.pointToIndex(newPoint)] {
-				newNode := append(append([]rasterPoint{}, node...), newPoint)
-				queue.Push(newNode, distance+1)
-			}
-		}
-		for _, newPoint := range r.diagonalNeighbors(currentPoint) {
-			if !r.obstructed[r.pointToIndex(newPoint)] {
-				newNode := append(append([]rasterPoint{}, node...), newPoint)
-				queue.Push(newNode, distance+math.Sqrt2)
+				newDist := math.Sqrt(math.Pow(float64(newPoint.X-currentPoint.X), 2)+
+					math.Pow(float64(newPoint.Y-currentPoint.Y), 2)) + distance
+				if d, ok := visited[newPoint]; !ok || d > newDist {
+					visited[newPoint] = newDist
+					newNode := append(append([]rasterPoint{}, node...), newPoint)
+					queue.Push(newNode, newDist)
+				}
 			}
 		}
 	}
@@ -228,19 +226,32 @@ func (r *rasterConnector) neighbors(p rasterPoint) []rasterPoint {
 	return res
 }
 
-func (r *rasterConnector) diagonalNeighbors(p rasterPoint) []rasterPoint {
-	res := make([]rasterPoint, 0, 4)
-	if p.X > 0 && p.Y > 0 {
-		res = append(res, rasterPoint{X: p.X - 1, Y: p.Y - 1})
-	}
-	if p.X > 0 && p.Y+1 < r.height {
-		res = append(res, rasterPoint{X: p.X - 1, Y: p.Y + 1})
-	}
-	if p.X+1 < r.width && p.Y > 0 {
-		res = append(res, rasterPoint{X: p.X + 1, Y: p.Y - 1})
-	}
-	if p.X+1 < r.width && p.Y+1 < r.height {
-		res = append(res, rasterPoint{X: p.X + 1, Y: p.Y + 1})
+// nearbyPoints finds a small square neighborhood of
+// points around p that definitely are not blocked by
+// obstacles and can be reached directly.
+func (r *rasterConnector) nearbyPoints(p rasterPoint) []rasterPoint {
+	var res []rasterPoint
+	hitObstacle := false
+	for delta := 1; delta < 5 && !hitObstacle; delta++ {
+		var pointRing []rasterPoint
+		for i := -delta; i <= delta; i++ {
+			for _, j := range []int{-delta, delta} {
+				p1 := rasterPoint{X: p.X + i, Y: p.Y + j}
+				p2 := rasterPoint{X: p.X + j, Y: p.Y + i}
+				for _, rp := range []rasterPoint{p1, p2} {
+					if rp.X < 0 || rp.Y < 0 || rp.X+1 >= r.width || rp.Y+1 >= r.height {
+						continue
+					}
+					if r.obstructed[r.pointToIndex(rp)] {
+						hitObstacle = true
+					} else {
+						res = append(res, rp)
+					}
+				}
+
+			}
+		}
+		res = append(res, pointRing...)
 	}
 	return res
 }
