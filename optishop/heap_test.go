@@ -24,23 +24,36 @@ func TestMinHeapOperations(t *testing.T) {
 	heap := NewMinHeap()
 	values := []float64{}
 	for i := 0; i < 10000; i++ {
-		doInsert := rand.Intn(2) == 0
+		n := rand.Intn(3)
+		doInsert := n == 0
+		doReplace := n == 1 && heap.Len() > 0
 		if doInsert {
 			value := float64(rand.Intn(1000))
 			heap.Push(value*2, value)
 			values = append(values, value*2)
+		} else if doReplace {
+			node := heap.nodes[rand.Intn(len(heap.nodes))]
+			oldPriority := node.Priority
+			value := float64(rand.Intn(1000))
+			heap.Replace(node, value*2, value)
+			for j, x := range values {
+				if x == oldPriority*2 {
+					values[j] = value * 2
+					break
+				}
+			}
 		} else {
-			poppedData, poppedPriority := heap.Pop()
+			node := heap.Pop()
 			if len(values) == 0 {
-				if poppedData != nil {
+				if node != nil {
 					t.Fatal("expected nil but got value")
 				}
 			} else {
-				if poppedPriority*2 != poppedData {
+				if node.Priority*2 != node.Data {
 					t.Fatal("invalid value/priority pair")
 				}
 				sort.Float64s(values)
-				if poppedData != values[0] {
+				if node.Data != values[0] {
 					t.Fatal("unexpected minimimum value")
 				}
 				values = values[1:]
