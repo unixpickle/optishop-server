@@ -1,6 +1,15 @@
 package optishop
 
-import "math"
+import (
+	"math"
+
+	"github.com/unixpickle/essentials"
+)
+
+const (
+	maxNearbyDelta = 4
+	rasterSize     = 600
+)
 
 // A Path is a sequence of points leading from some start
 // destination to some end destination.
@@ -35,11 +44,11 @@ func NewConnector(f *Floor) Connector {
 	// length.
 	_, _, w, h := f.Bounds.Bounds()
 	if w > h {
-		h *= 600 / w
-		w = 600
+		h *= rasterSize / w
+		w = rasterSize
 	} else {
-		w *= 600 / h
-		h = 600
+		w *= rasterSize / h
+		h = rasterSize
 	}
 	return newRasterConnector(f, int(math.Ceil(w)), int(math.Ceil(h)))
 }
@@ -117,6 +126,7 @@ func (r *rasterConnector) Unobstruct(p Point) Point {
 func (r *rasterConnector) Connect(a, b Point) Path {
 	start := r.pointToRaster(r.Unobstruct(a))
 	end := r.pointToRaster(r.Unobstruct(b))
+	dists := newRasterDistances()
 
 	queue := NewMinHeap()
 	queue.Push([]rasterPoint{start}, 0)
@@ -141,8 +151,7 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 
 		for _, newPoint := range r.nearbyPoints(currentPoint) {
 			if !r.obstructed[r.pointToIndex(newPoint)] {
-				newDist := math.Sqrt(math.Pow(float64(newPoint.X-currentPoint.X), 2)+
-					math.Pow(float64(newPoint.Y-currentPoint.Y), 2)) + distance
+				newDist := dists.Distance(currentPoint, newPoint) + distance
 				if d, ok := visited[newPoint]; !ok || d > newDist {
 					visited[newPoint] = newDist
 					newNode := append(append([]rasterPoint{}, node...), newPoint)
@@ -232,7 +241,7 @@ func (r *rasterConnector) neighbors(p rasterPoint) []rasterPoint {
 func (r *rasterConnector) nearbyPoints(p rasterPoint) []rasterPoint {
 	var res []rasterPoint
 	hitObstacle := false
-	for delta := 1; delta < 5 && !hitObstacle; delta++ {
+	for delta := 1; delta <= maxNearbyDelta && !hitObstacle; delta++ {
 		var pointRing []rasterPoint
 		for i := -delta; i <= delta; i++ {
 			for _, j := range []int{-delta, delta} {
@@ -263,4 +272,25 @@ func clampDim(x, dim int) int {
 		return dim - 1
 	}
 	return x
+}
+
+type rasterDistances struct {
+	table [][]float64
+}
+
+func newRasterDistances() *rasterDistances {
+	res := &rasterDistances{
+		table: make([][]float64, maxNearbyDelta+1),
+	}
+	for i := range res.table {
+		res.table[i] = make([]float64, maxNearbyDelta+1)
+		for j := range res.table[i] {
+			res.table[i][j] = math.Sqrt(math.Pow(float64(i), 2) + math.Pow(float64(j), 2))
+		}
+	}
+	return res
+}
+
+func (r *rasterDistances) Distance(p1, p2 rasterPoint) float64 {
+	return r.table[essentials.AbsInt(p1.X-p2.X)][essentials.AbsInt(p1.Y-p2.Y)]
 }
