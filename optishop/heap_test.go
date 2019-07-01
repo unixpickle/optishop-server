@@ -30,7 +30,7 @@ func TestMinHeapOperations(t *testing.T) {
 			heap.Push(value*2, value)
 			values = append(values, value*2)
 		} else {
-			poppedData, poppedPriority := heap.Dequeue()
+			poppedData, poppedPriority := heap.Pop()
 			if len(values) == 0 {
 				if poppedData != nil {
 					t.Fatal("expected nil but got value")

@@ -16,7 +16,7 @@ func (m *MinHeap) Len() int {
 	return len(m.nodes)
 }
 
-// Push adds an element to the heap, rearranging the heap
+// Push adds an element to the heap, re-arranging the heap
 // as necessary.
 // Multiple values may be pushed with the same priority,
 // in which case the order is undefined.
@@ -38,9 +38,9 @@ func (m *MinHeap) moveUp(loc heapLocation) {
 	}
 }
 
-// Dequeue removes and returns (one of) the lowest
-// priority values in the queue.
-func (m *MinHeap) Dequeue() (data interface{}, priority float64) {
+// Pop removes and returns (one of) the lowest priority
+// elements in the queue.
+func (m *MinHeap) Pop() (data interface{}, priority float64) {
 	if m.Len() == 0 {
 		return nil, 0
 	}
