@@ -60,6 +60,38 @@ func TestConnectorObstructed(t *testing.T) {
 	}
 }
 
+func TestConnectorUnobstructEdgeCase(t *testing.T) {
+	floor := &Floor{
+		Bounds: Polygon{
+			Point{X: 0, Y: 0},
+			Point{X: 2, Y: 1},
+			Point{X: 3, Y: 4},
+			Point{X: 1, Y: 3},
+			Point{X: 0, Y: 5},
+			Point{X: -4, Y: -2},
+			Point{X: 0, Y: 1},
+			Point{X: 0, Y: 0},
+		},
+		Obstacles: []Polygon{
+			Polygon{
+				Point{X: 0, Y: 2},
+				Point{X: -1, Y: 2},
+				Point{X: -1, Y: 1.5},
+			},
+			Polygon{
+				Point{X: 1, Y: 3},
+				Point{X: 1, Y: 4},
+				Point{X: -1, Y: 4},
+				Point{X: -1, Y: 3},
+			},
+		},
+	}
+	conn := NewConnector(floor)
+	if conn.Obstructed(conn.Unobstruct(Point{X: -5, Y: -3})) {
+		t.Error("failed to unobstruct point")
+	}
+}
+
 func BenchmarkNewConnector(b *testing.B) {
 	var floor *Floor
 	essentials.Must(json.Unmarshal([]byte(connectorFloorData), &floor))

@@ -115,8 +115,10 @@ func (r *rasterConnector) NonPreferred(p Point) bool {
 }
 
 func (r *rasterConnector) Unobstruct(p Point) Point {
-	// Basic BFS to find the nearest point in L1 distance.
 	start := r.pointToRaster(p)
+	start.X = clampDim(start.X, r.width)
+	start.Y = clampDim(start.Y, r.height)
+	// Basic BFS to find the nearest point in L1 distance.
 	queue := []rasterPoint{start}
 	visited := map[rasterPoint]bool{start: true}
 	for len(queue) > 0 {
