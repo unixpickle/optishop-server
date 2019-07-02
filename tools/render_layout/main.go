@@ -34,6 +34,9 @@ func main() {
 		destX := (width - curWidth) / 2
 
 		tools.DrawPolygon(canvas, floor.Bounds, destX-x, destY-y, "fill: white")
+		for _, nonPref := range floor.NonPreferred {
+			tools.DrawPolygon(canvas, nonPref, destX-x, destY-y, "fill: #f0f0f0")
+		}
 		for _, obstacle := range floor.Obstacles {
 			tools.DrawPolygon(canvas, obstacle, destX-x, destY-y, "fill: #d5d5d5")
 		}

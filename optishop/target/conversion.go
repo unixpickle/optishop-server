@@ -5,8 +5,8 @@ import "github.com/unixpickle/optishop-server/optishop"
 // Convert a MapInfo into a generic layout containing
 // portals and basic zone information.
 //
-// This layout does not include, obstacles, aisle zones,
-// or a boundary.
+// This layout does not include, obstacles, non-preferred
+// regions, aisle zones, or a boundary.
 func MapInfoToLayout(m *MapInfo) *optishop.Layout {
 	layout := &optishop.Layout{Floors: make([]*optishop.Floor, len(m.FloorMapDetails))}
 	markerToPortal := map[*MapMarker]*optishop.Portal{}
@@ -56,6 +56,7 @@ func MapInfoToLayout(m *MapInfo) *optishop.Layout {
 func AddFloorDetails(src *FloorDetails, dst *optishop.Floor) {
 	dst.Bounds = src.Bounds
 	dst.Obstacles = src.Obstacles
+	dst.NonPreferred = src.FloorPads
 	for name, loc := range src.Aisles {
 		dst.Zones = append(dst.Zones, &optishop.Zone{
 			Name:     name,

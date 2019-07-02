@@ -40,6 +40,10 @@ type Floor struct {
 	// All areas (e.g. shelves) which a shopper cannot
 	// penetrate in a floor.
 	Obstacles []Polygon
+
+	// All areas (e.g. carpeted sections) which a shopper
+	// shouldn't go through unless it's a destination.
+	NonPreferred []Polygon
 }
 
 // Portal finds the portal with the given ID, or returns

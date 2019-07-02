@@ -16,6 +16,7 @@ import (
 type FloorDetails struct {
 	Aisles    map[string]optishop.Point
 	Obstacles []optishop.Polygon
+	FloorPads []optishop.Polygon
 	Bounds    optishop.Polygon
 }
 
@@ -64,16 +65,14 @@ func parseFloorDetails(data []byte) (*FloorDetails, error) {
 		return nil, err
 	}
 
-	aisleShapes, ok := scrape.Find(parsed, scrape.ById("Aisle-Shapes"))
-	if !ok {
-		return nil, errors.New("missing 'Aisle-Shapes' group")
+	result.Obstacles, err = pathPolygons(parsed, "Aisle-Shapes", transform)
+	if err != nil {
+		return nil, err
 	}
-	for _, path := range findTag(aisleShapes, "path") {
-		poly, err := pathPolygon(path, transform)
-		if err != nil {
-			return nil, err
-		}
-		result.Obstacles = append(result.Obstacles, poly)
+
+	result.FloorPads, err = pathPolygons(parsed, "Floor-Pads", transform)
+	if err != nil {
+		return nil, err
 	}
 
 	aisleNames, ok := scrape.Find(parsed, scrape.ById("Aisle-Names"))
@@ -134,6 +133,22 @@ func (c *coordTransform) Apply(p optishop.Point) optishop.Point {
 		X: p.X*c[0] + p.Y*c[2] + c[4],
 		Y: p.X*c[1] + p.Y*c[3] + c[5],
 	}
+}
+
+func pathPolygons(container *html.Node, id string, c *coordTransform) ([]optishop.Polygon, error) {
+	elem, ok := scrape.Find(container, scrape.ById(id))
+	if !ok {
+		return nil, errors.New("missing '" + id + "' group")
+	}
+	var res []optishop.Polygon
+	for _, path := range findTag(elem, "path") {
+		poly, err := pathPolygon(path, c)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, poly)
+	}
+	return res, nil
 }
 
 func pathPolygon(elem *html.Node, c *coordTransform) (optishop.Polygon, error) {

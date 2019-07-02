@@ -59,6 +59,9 @@ func main() {
 	canvas.Start(width, height)
 
 	tools.DrawPolygon(canvas, floor.Bounds, -x, -y, "fill: white")
+	for _, nonPref := range floor.NonPreferred {
+		tools.DrawPolygon(canvas, nonPref, -x, -y, "fill: #f0f0f0")
+	}
 	for _, obstacle := range floor.Obstacles {
 		tools.DrawPolygon(canvas, obstacle, -x, -y, "fill: #d5d5d5")
 	}
