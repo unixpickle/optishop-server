@@ -25,6 +25,30 @@ func (l *Layout) Portal(id int) *Portal {
 	return nil
 }
 
+// FloorIndex finds the index of the given floor.
+// Returns -1 if the floor is not found.
+func (l *Layout) FloorIndex(f *Floor) int {
+	for i, x := range l.Floors {
+		if x == f {
+			return i
+		}
+	}
+	return -1
+}
+
+// PortalFloor gets the floor number of the given portal.
+// Returns -1 if the portal is not found.
+func (l *Layout) PortalFloor(p *Portal) int {
+	for i, f := range l.Floors {
+		for _, x := range f.Portals {
+			if x == p {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
 // A Floor specifies the physical layout of a single floor
 // of a store.
 type Floor struct {
