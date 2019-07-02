@@ -27,6 +27,11 @@ type Connector interface {
 	// obstructed.
 	Unobstruct(p Point) Point
 
+	// NonPreferred checks if a point is in an area that
+	// should only be entered if it contains a source or a
+	// destination.
+	NonPreferred(p Point) bool
+
 	// Connect finds a path connecting points a and b.
 	//
 	// If the start or end point is obstructed, a nearby
@@ -67,7 +72,8 @@ type rasterConnector struct {
 	width  int
 	height int
 
-	obstructed []bool
+	obstructed   []bool
+	nonPreferred []bool
 }
 
 func newRasterConnector(floor *Floor, width, height int) *rasterConnector {
@@ -81,11 +87,13 @@ func newRasterConnector(floor *Floor, width, height int) *rasterConnector {
 		width:  width,
 		height: height,
 
-		obstructed: make([]bool, width*height),
+		obstructed:   make([]bool, width*height),
+		nonPreferred: make([]bool, width*height),
 	}
 
 	res.checkBoundaries(floor.Bounds)
-	res.addObstacles(floor.Obstacles)
+	res.addToRaster(res.obstructed, floor.Obstacles)
+	res.addToRaster(res.nonPreferred, floor.NonPreferred)
 
 	return res
 }
@@ -96,6 +104,14 @@ func (r *rasterConnector) Obstructed(p Point) bool {
 		return true
 	}
 	return r.obstructed[r.pointToIndex(rp)]
+}
+
+func (r *rasterConnector) NonPreferred(p Point) bool {
+	rp := r.pointToRaster(p)
+	if rp.X < 0 || rp.Y < 0 || rp.X >= r.width || rp.Y >= r.height {
+		return false
+	}
+	return r.nonPreferred[r.pointToIndex(rp)]
 }
 
 func (r *rasterConnector) Unobstruct(p Point) Point {
@@ -128,8 +144,19 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 	end := r.pointToRaster(r.Unobstruct(b))
 	dists := newRasterDistances()
 
+	maxPreferredChanges := 0
+	if r.nonPreferred[r.pointToIndex(start)] {
+		maxPreferredChanges++
+	}
+	if r.nonPreferred[r.pointToIndex(end)] {
+		maxPreferredChanges++
+	}
+
 	queue := NewMinHeap()
-	firstNode := queue.Push(&connectorSearchNode{Point: start}, 0)
+	firstNode := queue.Push(&connectorSearchNode{
+		Point:        start,
+		NonPreferred: r.nonPreferred[r.pointToIndex(start)],
+	}, 0)
 	visited := make([]*MinHeapNode, r.width*r.height)
 	visited[r.pointToIndex(start)] = firstNode
 
@@ -153,11 +180,13 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 			newDist := dists.Distance(node.Point, newPoint) + distance
 			newIdx := r.pointToIndex(newPoint)
 			if searchNode := visited[newIdx]; searchNode == nil || searchNode.Priority > newDist {
-				newNode := &connectorSearchNode{Point: newPoint, Parent: node}
-				if searchNode == nil {
-					visited[newIdx] = queue.Push(newNode, newDist)
-				} else {
-					queue.Replace(searchNode, newNode, newDist)
+				newNode := node.AddStep(newPoint, r.nonPreferred[newIdx])
+				if newNode.NumPreferredChanges <= maxPreferredChanges {
+					if searchNode == nil {
+						visited[newIdx] = queue.Push(newNode, newDist)
+					} else {
+						queue.Replace(searchNode, newNode, newDist)
+					}
 				}
 			}
 		})
@@ -179,7 +208,7 @@ func (r *rasterConnector) checkBoundaries(bounds Polygon) {
 	}
 }
 
-func (r *rasterConnector) addObstacles(polygons []Polygon) {
+func (r *rasterConnector) addToRaster(raster []bool, polygons []Polygon) {
 	for _, poly := range polygons {
 		x, y, width, height := poly.Bounds()
 		minX := int(float64(r.width) * (x - r.boundsX) / r.boundsWidth)
@@ -195,7 +224,7 @@ func (r *rasterConnector) addObstacles(polygons []Polygon) {
 				rp := rasterPoint{X: j, Y: i}
 				p := r.rasterToPoint(rp)
 				if poly.Contains(p) {
-					r.obstructed[r.pointToIndex(rp)] = true
+					raster[r.pointToIndex(rp)] = true
 				}
 			}
 		}
@@ -297,4 +326,21 @@ func (r *rasterDistances) Distance(p1, p2 rasterPoint) float64 {
 type connectorSearchNode struct {
 	Point  rasterPoint
 	Parent *connectorSearchNode
+
+	NonPreferred        bool
+	NumPreferredChanges int
+}
+
+func (c *connectorSearchNode) AddStep(p rasterPoint, nonPref bool) *connectorSearchNode {
+	changes := c.NumPreferredChanges
+	if nonPref != c.NonPreferred {
+		changes++
+	}
+	return &connectorSearchNode{
+		Point:  p,
+		Parent: c,
+
+		NonPreferred:        nonPref,
+		NumPreferredChanges: changes,
+	}
 }
