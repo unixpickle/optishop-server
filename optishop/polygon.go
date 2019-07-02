@@ -34,6 +34,19 @@ func (p Point) Sub(p1 Point) Point {
 	return Point{X: p.X - p1.X, Y: p.Y - p1.Y}
 }
 
+// A Path is a sequence of points leading from some start
+// destination to some end destination.
+type Path []Point
+
+// Length gets the total path length in Euclidean space.
+func (p Path) Length() float64 {
+	var res float64
+	for i := 1; i < len(p); i++ {
+		res += p[i].Distance(p[i-1])
+	}
+	return res
+}
+
 // A Polygon is an arbitrary closed path.
 // It is obtained by tracing a path from the first point
 // to the last, and then back to the first point again.

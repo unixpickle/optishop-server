@@ -11,10 +11,6 @@ const (
 	rasterSize     = 600
 )
 
-// A Path is a sequence of points leading from some start
-// destination to some end destination.
-type Path []Point
-
 // A Connector finds short paths from one point to another
 // on a Floor, avoiding obstacles as needed.
 type Connector interface {
