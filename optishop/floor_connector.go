@@ -22,6 +22,19 @@ type FloorConnector struct {
 	Layout     *Layout
 }
 
+// NewFloorConnector creates a new FloorConnector using a
+// standard Connector implementation.
+func NewFloorConnector(layout *Layout) *FloorConnector {
+	conn := &FloorConnector{
+		Layout:     layout,
+		Connectors: make([]Connector, len(layout.Floors)),
+	}
+	for i, floor := range layout.Floors {
+		conn.Connectors[i] = NewConnector(floor)
+	}
+	return conn
+}
+
 // Connect finds a short FloorPath between points a and b.
 //
 // Returns nil if no path could be found.
