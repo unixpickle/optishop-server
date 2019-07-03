@@ -25,6 +25,17 @@ func (l *Layout) Portal(id int) *Portal {
 	return nil
 }
 
+// Zone finds the zone with the given name, or returns nil
+// if no zone was found.
+func (l *Layout) Zone(name string) *Zone {
+	for _, f := range l.Floors {
+		if z := f.Zone(name); z != nil {
+			return z
+		}
+	}
+	return nil
+}
+
 // FloorIndex finds the index of the given floor.
 // Returns -1 if the floor is not found.
 func (l *Layout) FloorIndex(f *Floor) int {
@@ -42,6 +53,19 @@ func (l *Layout) PortalFloor(p *Portal) int {
 	for i, f := range l.Floors {
 		for _, x := range f.Portals {
 			if x == p {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
+// ZoneFloor gets the floor number of the given zone.
+// Returns -1 if the zone is not found.
+func (l *Layout) ZoneFloor(z *Zone) int {
+	for i, f := range l.Floors {
+		for _, x := range f.Zones {
+			if x == z {
 				return i
 			}
 		}
