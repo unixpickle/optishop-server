@@ -17,18 +17,11 @@ type Suggestion struct {
 	SubResults     []*Suggestion `json:"subResults"`
 }
 
-// TypeAheadMeta is a meta-data field in a type-ahead
-// prediction.
-type TypeAheadMeta struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-}
-
 // TypeAheadResults contains the results of a type-ahead
 // prediction.
 type TypeAheadResults struct {
 	Suggestions []*Suggestion    `json:"suggestions"`
-	MetaData    []*TypeAheadMeta `json:"metaData"`
+	Metadata    *RequestMetadata `json:"metaData"`
 }
 
 // TypeAhead gets auto-complete suggestions for a given
