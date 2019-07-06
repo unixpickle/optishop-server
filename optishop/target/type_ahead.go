@@ -2,7 +2,6 @@ package target
 
 import (
 	"encoding/json"
-	"net/http"
 	"net/url"
 
 	"github.com/pkg/errors"
@@ -31,13 +30,12 @@ func TypeAhead(query string) (*TypeAheadResults, error) {
 	q.Set("q", query)
 	q.Set("ctgryVal", "0|ALL|matchallpartial|all categories")
 	u := "https://typeahead.target.com/autocomplete/TypeAheadSearch/v2" + q.Encode()
-	resp, err := http.Get(u)
+	data, err := GetRequest(u)
 	if err != nil {
 		return nil, errors.Wrap(err, "type ahead")
 	}
-	defer resp.Body.Close()
 	var res TypeAheadResults
-	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
+	if err := json.Unmarshal(data, &res); err != nil {
 		return nil, errors.Wrap(err, "type ahead")
 	}
 	return &res, nil
