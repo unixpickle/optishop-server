@@ -1,5 +1,13 @@
 package target
 
+import (
+	"encoding/json"
+	"net/url"
+	"strconv"
+
+	"github.com/pkg/errors"
+)
+
 type PackageDimensions struct {
 	Weight        string `json:"weight"`
 	WeightUnit    string `json:"weight_unit_of_measure"`
@@ -54,4 +62,30 @@ type SearchResults struct {
 	} `json:"items"`
 	Metadata    *RequestMetadata `json:"metaData"`
 	Suggestions []string         `json:"suggestions"`
+}
+
+// Search runs a search query against a store's inventory.
+func (c *Client) Search(query, storeID string, offset int) (*SearchResults, error) {
+	q := url.Values{}
+	q.Add("channel", "web")
+	q.Add("count", "24")
+	q.Add("default_purchasability_filter", "true")
+	q.Add("isDLP", "false")
+	q.Add("keyword", query)
+	q.Add("offset", strconv.Itoa(offset))
+	q.Add("pricing_store_id", storeID)
+	q.Add("store_ids", storeID)
+	q.Add("include_sponsored_search", "false")
+	q.Add("platform", "desktop")
+	q.Add("key", c.Key())
+	u := "https://redsky.target.com/v2/plp/search/?" + q.Encode()
+	data, err := GetRequest(u)
+	if err != nil {
+		return nil, errors.Wrap(err, "search")
+	}
+	var res SearchResults
+	if err := json.Unmarshal(data, &res); err != nil {
+		return nil, errors.Wrap(err, "search")
+	}
+	return &res, nil
 }
