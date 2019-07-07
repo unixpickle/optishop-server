@@ -6,9 +6,9 @@ import (
 
 type ListItem struct {
 	Name        string `json:"name"`
-	PhotoURL    string `json:"photo_url"`
+	PhotoURL    string `json:"photoUrl"`
 	Description string `json:"description"`
-	InStock     bool   `json:"in_stock"`
+	InStock     bool   `json:"inStock"`
 }
 
 func ConvertListItem(prod optishop.InventoryProduct) *ListItem {

@@ -22,10 +22,13 @@ func main() {
 
 	server := &Server{Store: store, AssetDir: args.AssetDir}
 	http.HandleFunc("/", server.HandleRoot)
+	http.HandleFunc("/script.js", server.HandleScript)
+	http.HandleFunc("/style.css", server.HandleStyle)
 	http.HandleFunc("/list", server.HandleList)
 	http.HandleFunc("/search", server.HandleSearch)
 	http.HandleFunc("/add", server.HandleAdd)
 	http.HandleFunc("/delete", server.HandleDelete)
+	http.ListenAndServe(args.Addr, nil)
 }
 
 type Server struct {
@@ -38,6 +41,14 @@ type Server struct {
 
 func (s *Server) HandleRoot(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, filepath.Join(s.AssetDir, "index.html"))
+}
+
+func (s *Server) HandleScript(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(s.AssetDir, "script.js"))
+}
+
+func (s *Server) HandleStyle(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, filepath.Join(s.AssetDir, "style.css"))
 }
 
 func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
@@ -105,6 +116,5 @@ func (s *Server) HandleDelete(w http.ResponseWriter, r *http.Request) {
 
 func serveError(w http.ResponseWriter, r *http.Request, err error) {
 	obj := map[string]string{"error": err.Error()}
-	w.WriteHeader(http.StatusInternalServerError)
 	json.NewEncoder(w).Encode(obj)
 }
