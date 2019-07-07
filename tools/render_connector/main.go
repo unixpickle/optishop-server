@@ -48,7 +48,7 @@ func main() {
 		essentials.Die("zones not found")
 	}
 
-	path := optishop.NewConnector(floor).Connect(startPoint, endPoint)
+	path := optishop.NewRaster(floor).Connect(startPoint, endPoint)
 	if path == nil {
 		essentials.Die("no path could be found")
 	}
