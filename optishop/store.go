@@ -9,6 +9,9 @@ type InventoryProduct interface {
 
 type Inventory interface {
 	Search(query string) ([]InventoryProduct, error)
+
+	MarshalProduct(prod InventoryProduct) ([]byte, error)
+	UnmarshalProduct(data []byte) (InventoryProduct, error)
 }
 
 type Store interface {

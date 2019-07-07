@@ -1,6 +1,7 @@
 package target
 
 import (
+	"encoding/json"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -74,6 +75,18 @@ func (s *Store) Search(query string) ([]optishop.InventoryProduct, error) {
 		products = append(products, &inventoryProduct{SearchItem: res})
 	}
 	return products, nil
+}
+
+func (s *Store) MarshalProduct(prod optishop.InventoryProduct) ([]byte, error) {
+	return json.Marshal(prod)
+}
+
+func (s *Store) UnmarshalProduct(data []byte) (optishop.InventoryProduct, error) {
+	var prod inventoryProduct
+	if err := json.Unmarshal(data, &prod); err != nil {
+		return nil, errors.Wrap(err, "unmarshal product")
+	}
+	return &prod, nil
 }
 
 func (s *Store) Layout() *optishop.Layout {
