@@ -37,6 +37,51 @@ type BatchConnector interface {
 	ConnectBatch(start Point, ends []Point) []Path
 }
 
+// A CacheConnector is a Connector that caches short paths
+// from another connector.
+type CacheConnector struct {
+	bc    BatchConnector
+	cache map[Point]map[Point]Path
+}
+
+// NewCacheConnector creates a new CacheConnector that
+// relies on an underlying BatchConnector.
+func NewCacheConnector(bc BatchConnector) *CacheConnector {
+	return &CacheConnector{bc: bc, cache: map[Point]map[Point]Path{}}
+}
+
+// Connect finds a short path from point a to point b.
+func (c *CacheConnector) Connect(a, b Point) Path {
+	if _, ok := c.cache[a]; !ok {
+		c.addPoint(a)
+	} else if _, ok := c.cache[b]; !ok {
+		c.addPoint(b)
+	}
+	if path, ok := c.cache[a][b]; ok {
+		return path
+	}
+	path := append(Path{}, c.cache[b][a]...)
+	essentials.Reverse(path)
+	return path
+}
+
+func (c *CacheConnector) addPoint(p Point) {
+	other := c.points()
+	paths := map[Point]Path{}
+	for i, p := range c.bc.ConnectBatch(p, other) {
+		paths[other[i]] = p
+	}
+	c.cache[p] = paths
+}
+
+func (c *CacheConnector) points() []Point {
+	res := make([]Point, 0, len(c.cache))
+	for p := range c.cache {
+		res = append(res, p)
+	}
+	return res
+}
+
 type rasterPoint struct {
 	X int
 	Y int

@@ -35,6 +35,21 @@ func NewFloorConnector(layout *Layout) *FloorConnector {
 	return conn
 }
 
+// NewFloorConnectorCached is like NewFloorConnector, but
+// the internal connectors cache results and use batch
+// computations so that computing all pairwise distances
+// between N points is still O(N).
+func NewFloorConnectorCached(layout *Layout) *FloorConnector {
+	conn := &FloorConnector{
+		Layout:     layout,
+		Connectors: make([]Connector, len(layout.Floors)),
+	}
+	for i, floor := range layout.Floors {
+		conn.Connectors[i] = NewCacheConnector(NewRaster(floor))
+	}
+	return conn
+}
+
 // Connect finds a short FloorPath between points a and b.
 //
 // Returns nil if no path could be found.
