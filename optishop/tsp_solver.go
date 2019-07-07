@@ -3,7 +3,7 @@ package optishop
 import "math"
 
 // A TSPSolver is an algorithm that (approximately) solves
-// Travelling salesman problems.
+// Traveling salesman problems.
 type TSPSolver interface {
 	// SolveTSP computes a route through n points that is
 	// intended to be efficient with respect to the given
