@@ -9,9 +9,9 @@ type TSPSolver interface {
 	// intended to be efficient with respect to the given
 	// distance function.
 	//
-	// The resulting route both starts and ends at the
-	// first point, and passes through the other points
-	// exactly once.
+	// The resulting route starts at point 0 and ends at
+	// point n - 1. It passes through each point exactly
+	// once.
 	SolveTSP(n int, distance func(a, b int) float64) []int
 }
 
@@ -24,10 +24,10 @@ func (g GreedyTSPSolver) SolveTSP(n int, distance func(a, b int) float64) []int 
 	visited := map[int]bool{0: true}
 	route := []int{0}
 	p := 0
-	for len(route) < n {
+	for len(route) < n-1 {
 		minDist := math.Inf(1)
 		minNode := 0
-		for i := 1; i < n; i++ {
+		for i := 1; i < n-1; i++ {
 			if visited[i] {
 				continue
 			}
@@ -41,6 +41,6 @@ func (g GreedyTSPSolver) SolveTSP(n int, distance func(a, b int) float64) []int 
 		route = append(route, p)
 		visited[p] = true
 	}
-	route = append(route, 0)
+	route = append(route, n-1)
 	return route
 }
