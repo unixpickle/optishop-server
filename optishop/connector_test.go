@@ -92,6 +92,37 @@ func TestRasterUnobstructEdgeCase(t *testing.T) {
 	}
 }
 
+func TestRasterConnectBatch(t *testing.T) {
+	var floor *Floor
+	essentials.Must(json.Unmarshal([]byte(connectorFloorData), &floor))
+
+	start := floor.Zone("D10").Location
+	ends := []Point{
+		floor.Zone("B19").Location,
+		floor.Zone("D8").Location,
+		floor.Zone("CL13").Location,
+		floor.Zone("womens").Location,
+	}
+
+	raster := NewRaster(floor)
+
+	actuals := raster.ConnectBatch(start, ends)
+	for i, actual := range actuals {
+		expected := raster.Connect(start, ends[i])
+		if len(actual) != len(expected) {
+			t.Errorf("mismatched length at index %d", i)
+		} else {
+			for j, a := range actual {
+				x := expected[j]
+				if a != x {
+					t.Errorf("mismatched path at index %d", i)
+					break
+				}
+			}
+		}
+	}
+}
+
 func BenchmarkNewRaster(b *testing.B) {
 	var floor *Floor
 	essentials.Must(json.Unmarshal([]byte(connectorFloorData), &floor))
@@ -109,6 +140,27 @@ func BenchmarkRasterConnect(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		conn.Connect(start, end)
+	}
+}
+
+func BenchmarkRasterConnectBatch(b *testing.B) {
+	var floor *Floor
+	essentials.Must(json.Unmarshal([]byte(connectorFloorData), &floor))
+
+	start := floor.Zone("D10").Location
+	ends := []Point{
+		floor.Zone("B19").Location,
+		floor.Zone("D8").Location,
+		floor.Zone("CL13").Location,
+		floor.Zone("womens").Location,
+	}
+
+	raster := NewRaster(floor)
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		raster.ConnectBatch(start, ends)
 	}
 }
 

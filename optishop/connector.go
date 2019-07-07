@@ -23,6 +23,20 @@ type Connector interface {
 	Connect(a, b Point) Path
 }
 
+// A BatchConnector finds short paths from one point to a
+// list of other points on a Floor.
+type BatchConnector interface {
+	// ConnectBatch finds paths connecting the start point
+	// to all the other destination points.
+	//
+	// The returned slice of paths contains a path for
+	// each end point.
+	//
+	// Paths are nil if no path between the start and end
+	// points could be found.
+	ConnectBatch(start Point, ends []Point) []Path
+}
+
 type rasterPoint struct {
 	X int
 	Y int
@@ -160,14 +174,7 @@ func (r *Raster) Connect(a, b Point) Path {
 		node := queueNode.Data.(*connectorSearchNode)
 
 		if node.Point == end {
-			points := Path{b}
-			for node != nil {
-				points = append(points, r.rasterToPoint(node.Point))
-				node = node.Parent
-			}
-			points = append(points, a)
-			essentials.Reverse(points)
-			return points
+			return r.searchNodeToPath(node, a, b)
 		}
 
 		r.nearbyPoints(node.Point, func(newPoint rasterPoint) {
@@ -187,6 +194,80 @@ func (r *Raster) Connect(a, b Point) Path {
 	}
 
 	return nil
+}
+
+// ConnectBatch finds short paths from the start point to
+// all of the end points.
+func (r *Raster) ConnectBatch(start Point, ends []Point) []Path {
+	rasterStart := r.pointToRaster(r.Unobstruct(start))
+	rasterEnds := make([]rasterPoint, len(ends))
+	for i, end := range ends {
+		rasterEnds[i] = r.pointToRaster(r.Unobstruct(end))
+	}
+	dists := newRasterDistances()
+
+	maxPreferredChanges := 0
+	if r.nonPreferred[r.pointToIndex(rasterStart)] {
+		maxPreferredChanges++
+	}
+	for _, end := range rasterEnds {
+		if r.nonPreferred[r.pointToIndex(end)] {
+			maxPreferredChanges++
+			break
+		}
+	}
+
+	queue := NewMinHeap()
+	firstNode := queue.Push(&connectorSearchNode{
+		Point:        rasterStart,
+		NonPreferred: r.nonPreferred[r.pointToIndex(rasterStart)],
+	}, 0)
+	visited := make([]*MinHeapNode, r.width*r.height)
+	visited[r.pointToIndex(rasterStart)] = firstNode
+
+	results := make([]Path, len(ends))
+	numResults := 0
+
+	for queue.Len() > 0 && numResults < len(ends) {
+		queueNode := queue.Pop()
+		distance := queueNode.Priority
+		node := queueNode.Data.(*connectorSearchNode)
+
+		for i, end := range rasterEnds {
+			if node.Point == end && results[i] == nil {
+				numResults++
+				results[i] = r.searchNodeToPath(node, start, ends[i])
+			}
+		}
+
+		r.nearbyPoints(node.Point, func(newPoint rasterPoint) {
+			newDist := dists.Distance(node.Point, newPoint) + distance
+			newIdx := r.pointToIndex(newPoint)
+			if searchNode := visited[newIdx]; searchNode == nil || searchNode.Priority > newDist {
+				newNode := node.AddStep(newPoint, r.nonPreferred[newIdx])
+				if newNode.NumPreferredChanges <= maxPreferredChanges {
+					if searchNode == nil {
+						visited[newIdx] = queue.Push(newNode, newDist)
+					} else {
+						queue.Replace(searchNode, newNode, newDist)
+					}
+				}
+			}
+		})
+	}
+
+	return results
+}
+
+func (r *Raster) searchNodeToPath(node *connectorSearchNode, start, end Point) Path {
+	points := Path{end}
+	for node != nil {
+		points = append(points, r.rasterToPoint(node.Point))
+		node = node.Parent
+	}
+	points = append(points, start)
+	essentials.Reverse(points)
+	return points
 }
 
 func (r *Raster) checkBoundaries(bounds Polygon) {
