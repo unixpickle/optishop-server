@@ -12,46 +12,15 @@ const (
 )
 
 // A Connector finds short paths from one point to another
-// on a Floor, avoiding obstacles as needed.
+// on a Floor.
 type Connector interface {
-	// Obstructed checks if a point is obstructed.
-	// A point is obstructed if it is either inside of an
-	// obstacle, or outside of the floor's bounds.
-	Obstructed(p Point) bool
-
-	// Unobstruct gets a point close to p which is not
-	// obstructed.
-	Unobstruct(p Point) Point
-
-	// NonPreferred checks if a point is in an area that
-	// should only be entered if it contains a source or a
-	// destination.
-	NonPreferred(p Point) bool
-
 	// Connect finds a path connecting points a and b.
 	//
-	// If the start or end point is obstructed, a nearby
-	// unobstructed point is used.
+	// When a path is found, the first and last points are
+	// a and b, respectively.
 	//
 	// If no path can be found, nil is returned.
 	Connect(a, b Point) Path
-}
-
-// NewConnector creates a concrete implementation of
-// Connector for the given floor plan.
-func NewConnector(f *Floor) Connector {
-	// The raster size must preserve the same aspect ratio
-	// so that diagonal lines are really the correct
-	// length.
-	_, _, w, h := f.Bounds.Bounds()
-	if w > h {
-		h *= rasterSize / w
-		w = rasterSize
-	} else {
-		w *= rasterSize / h
-		h = rasterSize
-	}
-	return newRasterConnector(f, int(math.Ceil(w)), int(math.Ceil(h)))
 }
 
 type rasterPoint struct {
@@ -59,7 +28,9 @@ type rasterPoint struct {
 	Y int
 }
 
-type rasterConnector struct {
+// A Raster uses a grid of discrete pixels to find paths
+// in a Floor without hitting obstacles.
+type Raster struct {
 	boundsX      float64
 	boundsY      float64
 	boundsWidth  float64
@@ -72,9 +43,27 @@ type rasterConnector struct {
 	nonPreferred []bool
 }
 
-func newRasterConnector(floor *Floor, width, height int) *rasterConnector {
+// NewRaster creates a Raster for the floor plan with an
+// automatically determined size.
+func NewRaster(floor *Floor) *Raster {
+	// The raster size must preserve the same aspect ratio
+	// so that diagonal lines are really the correct
+	// length.
+	_, _, w, h := floor.Bounds.Bounds()
+	if w > h {
+		h *= rasterSize / w
+		w = rasterSize
+	} else {
+		w *= rasterSize / h
+		h = rasterSize
+	}
+	return NewRasterSize(floor, int(math.Ceil(w)), int(math.Ceil(h)))
+}
+
+// NewRasterSize creates a new Raster with a given size.
+func NewRasterSize(floor *Floor, width, height int) *Raster {
 	x, y, w, h := floor.Bounds.Bounds()
-	res := &rasterConnector{
+	res := &Raster{
 		boundsX:      x,
 		boundsY:      y,
 		boundsWidth:  w,
@@ -94,7 +83,9 @@ func newRasterConnector(floor *Floor, width, height int) *rasterConnector {
 	return res
 }
 
-func (r *rasterConnector) Obstructed(p Point) bool {
+// Obstructed checks if a point is inside an obstacle
+// and/or outside the bounds of the floor.
+func (r *Raster) Obstructed(p Point) bool {
 	rp := r.pointToRaster(p)
 	if rp.X < 0 || rp.Y < 0 || rp.X >= r.width || rp.Y >= r.height {
 		return true
@@ -102,7 +93,9 @@ func (r *rasterConnector) Obstructed(p Point) bool {
 	return r.obstructed[r.pointToIndex(rp)]
 }
 
-func (r *rasterConnector) NonPreferred(p Point) bool {
+// NonPreferred checks if the point is in a non-preferred
+// region.
+func (r *Raster) NonPreferred(p Point) bool {
 	rp := r.pointToRaster(p)
 	if rp.X < 0 || rp.Y < 0 || rp.X >= r.width || rp.Y >= r.height {
 		return false
@@ -110,7 +103,9 @@ func (r *rasterConnector) NonPreferred(p Point) bool {
 	return r.nonPreferred[r.pointToIndex(rp)]
 }
 
-func (r *rasterConnector) Unobstruct(p Point) Point {
+// Unobstruct finds a point close to p that is not
+// obstructed.
+func (r *Raster) Unobstruct(p Point) Point {
 	start := r.pointToRaster(p)
 	start.X = clampDim(start.X, r.width)
 	start.Y = clampDim(start.Y, r.height)
@@ -137,7 +132,8 @@ func (r *rasterConnector) Unobstruct(p Point) Point {
 	return p
 }
 
-func (r *rasterConnector) Connect(a, b Point) Path {
+// Connect finds a short path between two points.
+func (r *Raster) Connect(a, b Point) Path {
 	start := r.pointToRaster(r.Unobstruct(a))
 	end := r.pointToRaster(r.Unobstruct(b))
 	dists := newRasterDistances()
@@ -193,7 +189,7 @@ func (r *rasterConnector) Connect(a, b Point) Path {
 	return nil
 }
 
-func (r *rasterConnector) checkBoundaries(bounds Polygon) {
+func (r *Raster) checkBoundaries(bounds Polygon) {
 	idx := 0
 	for y := 0; y < r.height; y++ {
 		for x := 0; x < r.width; x++ {
@@ -206,7 +202,7 @@ func (r *rasterConnector) checkBoundaries(bounds Polygon) {
 	}
 }
 
-func (r *rasterConnector) addToRaster(raster []bool, polygons []Polygon) {
+func (r *Raster) addToRaster(raster []bool, polygons []Polygon) {
 	for _, poly := range polygons {
 		x, y, width, height := poly.Bounds()
 		minX := int(float64(r.width) * (x - r.boundsX) / r.boundsWidth)
@@ -229,25 +225,25 @@ func (r *rasterConnector) addToRaster(raster []bool, polygons []Polygon) {
 	}
 }
 
-func (r *rasterConnector) pointToRaster(p Point) rasterPoint {
+func (r *Raster) pointToRaster(p Point) rasterPoint {
 	return rasterPoint{
 		X: int(math.Round(float64(r.width) * (p.X - r.boundsX) / r.boundsWidth)),
 		Y: int(math.Round(float64(r.height) * (p.Y - r.boundsY) / r.boundsHeight)),
 	}
 }
 
-func (r *rasterConnector) rasterToPoint(p rasterPoint) Point {
+func (r *Raster) rasterToPoint(p rasterPoint) Point {
 	return Point{
 		X: (float64(p.X)/float64(r.width))*r.boundsWidth + r.boundsX,
 		Y: (float64(p.Y)/float64(r.height))*r.boundsHeight + r.boundsY,
 	}
 }
 
-func (r *rasterConnector) pointToIndex(p rasterPoint) int {
+func (r *Raster) pointToIndex(p rasterPoint) int {
 	return p.X + p.Y*r.width
 }
 
-func (r *rasterConnector) neighbors(p rasterPoint) []rasterPoint {
+func (r *Raster) neighbors(p rasterPoint) []rasterPoint {
 	res := make([]rasterPoint, 0, 4)
 	if p.X > 0 {
 		res = append(res, rasterPoint{X: p.X - 1, Y: p.Y})
@@ -268,7 +264,7 @@ func (r *rasterConnector) neighbors(p rasterPoint) []rasterPoint {
 // points around p that definitely are not blocked by
 // obstacles and can be reached directly, and calls f for
 // each such point.
-func (r *rasterConnector) nearbyPoints(p rasterPoint, f func(rasterPoint)) {
+func (r *Raster) nearbyPoints(p rasterPoint, f func(rasterPoint)) {
 	hitObstacle := false
 	for delta := 1; delta <= maxNearbyDelta && !hitObstacle; delta++ {
 		for i := -delta; i <= delta; i++ {

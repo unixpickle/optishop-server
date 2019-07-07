@@ -7,7 +7,7 @@ import (
 	"github.com/unixpickle/essentials"
 )
 
-func TestConnectorObstructed(t *testing.T) {
+func TestRasterObstructed(t *testing.T) {
 	floor := &Floor{
 		Bounds: Polygon{
 			Point{X: 0, Y: 0},
@@ -33,7 +33,7 @@ func TestConnectorObstructed(t *testing.T) {
 			},
 		},
 	}
-	conn := NewConnector(floor)
+	conn := NewRaster(floor)
 
 	testPoints := []Point{
 		Point{X: 1, Y: 0},
@@ -60,7 +60,7 @@ func TestConnectorObstructed(t *testing.T) {
 	}
 }
 
-func TestConnectorUnobstructEdgeCase(t *testing.T) {
+func TestRasterUnobstructEdgeCase(t *testing.T) {
 	floor := &Floor{
 		Bounds: Polygon{
 			Point{X: 0, Y: 0},
@@ -86,24 +86,24 @@ func TestConnectorUnobstructEdgeCase(t *testing.T) {
 			},
 		},
 	}
-	conn := NewConnector(floor)
+	conn := NewRaster(floor)
 	if conn.Obstructed(conn.Unobstruct(Point{X: -5, Y: -3})) {
 		t.Error("failed to unobstruct point")
 	}
 }
 
-func BenchmarkNewConnector(b *testing.B) {
+func BenchmarkNewRaster(b *testing.B) {
 	var floor *Floor
 	essentials.Must(json.Unmarshal([]byte(connectorFloorData), &floor))
 	for i := 0; i < b.N; i++ {
-		NewConnector(floor)
+		NewRaster(floor)
 	}
 }
 
-func BenchmarkConnectorConnect(b *testing.B) {
+func BenchmarkRasterConnect(b *testing.B) {
 	var floor *Floor
 	essentials.Must(json.Unmarshal([]byte(connectorFloorData), &floor))
-	conn := NewConnector(floor)
+	conn := NewRaster(floor)
 	start := floor.Zone("D10").Location
 	end := floor.Zone("B19").Location
 	b.ResetTimer()

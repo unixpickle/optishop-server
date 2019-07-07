@@ -22,15 +22,15 @@ type FloorConnector struct {
 	Layout     *Layout
 }
 
-// NewFloorConnector creates a new FloorConnector using a
-// standard Connector implementation.
+// NewFloorConnector creates a new FloorConnector using
+// Rasters for the Connector implementation.
 func NewFloorConnector(layout *Layout) *FloorConnector {
 	conn := &FloorConnector{
 		Layout:     layout,
 		Connectors: make([]Connector, len(layout.Floors)),
 	}
 	for i, floor := range layout.Floors {
-		conn.Connectors[i] = NewConnector(floor)
+		conn.Connectors[i] = NewRaster(floor)
 	}
 	return conn
 }
