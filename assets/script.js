@@ -13,12 +13,16 @@ function updateListData(data) {
         const zone = (data.zones[i] || {})['Name'] || '';
         const entry = document.createElement('div');
         entry.className = 'list-item';
+        const photo = document.createElement('img');
+        photo.className = 'photo';
+        photo.src = item.photoUrl;
         const name = document.createElement('label');
-        name.className = 'list-name';
-        name.textContent = item.name;
+        name.className = 'name';
+        name.innerHTML = item.name;
         const zoneName = document.createElement('label');
         zoneName.className = 'zone';
         zoneName.textContent = zone;
+        entry.appendChild(photo);
         entry.appendChild(name);
         entry.appendChild(zoneName);
         elem.appendChild(entry);
@@ -48,7 +52,7 @@ function showSearchResults(results) {
         photo.src = result.photoUrl;
         const name = document.createElement('label');
         name.className = 'name';
-        name.textContent = result.name;
+        name.innerHTML = result.name;
         const add = document.createElement('button');
         add.addEventListener('click', () => {
             addListItem(exactResult);
