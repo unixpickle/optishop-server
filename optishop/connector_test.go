@@ -123,6 +123,29 @@ func TestRasterConnectBatch(t *testing.T) {
 	}
 }
 
+func TestRasterConnectSame(t *testing.T) {
+	var floor *Floor
+	essentials.Must(json.Unmarshal([]byte(connectorFloorData), &floor))
+	raster := NewRaster(floor)
+	point := floor.Zone("B18").Location
+	path := raster.Connect(point, point)
+	if path == nil || path[0] != point || path[len(path)-1] != point {
+		t.Errorf("unexpected path")
+	}
+}
+
+func TestCachedConnectSame(t *testing.T) {
+	var floor *Floor
+	essentials.Must(json.Unmarshal([]byte(connectorFloorData), &floor))
+	raster := NewRaster(floor)
+	cache := NewCacheConnector(raster)
+	point := floor.Zone("B18").Location
+	path := cache.Connect(point, point)
+	if path == nil || path[0] != point || path[len(path)-1] != point {
+		t.Errorf("unexpected path")
+	}
+}
+
 func BenchmarkNewRaster(b *testing.B) {
 	var floor *Floor
 	essentials.Must(json.Unmarshal([]byte(connectorFloorData), &floor))

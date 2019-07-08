@@ -52,6 +52,9 @@ func NewCacheConnector(bc BatchConnector) *CacheConnector {
 
 // Connect finds a short path from point a to point b.
 func (c *CacheConnector) Connect(a, b Point) Path {
+	if a == b {
+		return Path{a, b}
+	}
 	if _, ok := c.cache[a]; !ok {
 		c.addPoint(a)
 	}
