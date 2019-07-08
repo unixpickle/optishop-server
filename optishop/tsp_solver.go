@@ -2,8 +2,6 @@ package optishop
 
 import (
 	"math"
-
-	"github.com/unixpickle/approb"
 )
 
 // A TSPSolver is an algorithm that (approximately) solves
@@ -56,26 +54,35 @@ type FactorialTSPSolver struct{}
 // SolveTSP generates an exact solution to the TSP in
 // O(n!) time.
 func (f FactorialTSPSolver) SolveTSP(n int, distance func(a, b int) float64) []int {
-	var bestSolution []int
-	bestDistance := math.Inf(1)
+	solution := make([]int, n)
+	solution[n-1] = n - 1
+	bestDist := math.Inf(1)
 
-	for perm := range approb.Perms(n - 2) {
-		solution := make([]int, 0, n)
-		solution = append(solution, 0)
-		for _, x := range perm {
-			solution = append(solution, x+1)
-		}
-		solution = append(solution, n-1)
+	used := make([]bool, n-1)
+	used[0] = true
 
-		var dist float64
-		for i := 0; i < len(solution)-1; i++ {
-			dist += distance(solution[i], solution[i+1])
+	f.recurse(1, 0, used, make([]int, n-1), distance, &bestDist, solution)
+
+	return solution
+}
+
+func (f FactorialTSPSolver) recurse(length int, distance float64, used []bool, perm []int,
+	distFn func(i, j int) float64, bestDist *float64, bestPerm []int) {
+	if length == len(used) {
+		distance += distFn(perm[length-1], len(used))
+		if distance < *bestDist {
+			*bestDist = distance
+			copy(bestPerm, perm)
 		}
-		if dist < bestDistance {
-			bestDistance = dist
-			bestSolution = solution
+		return
+	}
+	for i, u := range used {
+		if !u {
+			perm[length] = i
+			used[i] = true
+			f.recurse(length+1, distance+distFn(perm[length-1], i), used, perm, distFn,
+				bestDist, bestPerm)
+			used[i] = false
 		}
 	}
-
-	return bestSolution
 }
