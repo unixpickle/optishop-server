@@ -18,12 +18,12 @@ func main() {
 	var layout optishop.Layout
 	essentials.Must(json.NewDecoder(os.Stdin).Decode(&layout))
 
-	width, height, _ := visualize.MultiFloorGeometry(layout)
+	width, height, _ := visualize.MultiFloorGeometry(&layout)
 
 	canvas := svg.New(os.Stdout)
 	canvas.Start(width, height)
 
-	visualize.DrawFloors(canvas, layout)
+	visualize.DrawFloors(canvas, &layout)
 
 	canvas.End()
 }

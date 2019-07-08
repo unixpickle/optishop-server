@@ -52,13 +52,13 @@ func main() {
 		essentials.Die("no path could be found")
 	}
 
-	width, height, _ := visualize.MultiFloorGeometry(layout)
+	width, height, _ := visualize.MultiFloorGeometry(&layout)
 
 	canvas := svg.New(os.Stdout)
 	canvas.Start(width, height)
 
-	visualize.DrawFloors(canvas, layout)
-	visualize.DrawFloorPath(canvas, layout, optishop.FloorPath{
+	visualize.DrawFloors(canvas, &layout)
+	visualize.DrawFloorPath(canvas, &layout, optishop.FloorPath{
 		&optishop.FloorPathStep{
 			Floor: layout.FloorIndex(floor),
 			Path:  path,

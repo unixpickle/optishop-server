@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"net/http"
 	"path/filepath"
+
+	svg "github.com/ajstarks/svgo/float"
+	"github.com/unixpickle/optishop-server/optishop/visualize"
 
 	"github.com/unixpickle/essentials"
 	"github.com/unixpickle/optishop-server/optishop"
@@ -164,8 +168,30 @@ func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
 	resultObj := map[string]interface{}{
 		"items": ConvertListItems(sortedItems),
 		"zones": sortedZones,
+		"image": s.renderSVG(points, solution, floorConn),
 	}
 	json.NewEncoder(w).Encode(resultObj)
+}
+
+func (s *Server) renderSVG(points []optishop.FloorPoint, solution []int,
+	floorConn *optishop.FloorConnector) string {
+	output := bytes.NewBuffer(nil)
+	width, height, _ := visualize.MultiFloorGeometry(s.Store.Layout())
+
+	canvas := svg.New(output)
+	canvas.Start(width, height)
+
+	visualize.DrawFloors(canvas, s.Store.Layout())
+	for i := 0; i < len(solution)-1; i++ {
+		path := floorConn.Connect(points[solution[i]], points[solution[i+1]])
+		if path != nil {
+			visualize.DrawFloorPath(canvas, s.Store.Layout(), path)
+		}
+	}
+
+	canvas.End()
+
+	return string(output.Bytes())
 }
 
 func serveError(w http.ResponseWriter, r *http.Request, err error) {

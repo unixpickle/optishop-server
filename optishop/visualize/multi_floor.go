@@ -26,7 +26,7 @@ const PathFrac = 0.005
 //
 // The sizes include room for margins, and the margin is
 // returned as well for convenience.
-func MultiFloorGeometry(layout optishop.Layout) (width, height, margin float64) {
+func MultiFloorGeometry(layout *optishop.Layout) (width, height, margin float64) {
 	var maxWidth float64
 	var totalHeight float64
 	for _, floor := range layout.Floors {
@@ -42,7 +42,7 @@ func MultiFloorGeometry(layout optishop.Layout) (width, height, margin float64) 
 
 // MultiFloorLoop runs a function f for each floor,
 // specifying the x and y offset for that floor.
-func MultiFloorLoop(layout optishop.Layout, f func(f *optishop.Floor, x, y float64)) {
+func MultiFloorLoop(layout *optishop.Layout, f func(f *optishop.Floor, x, y float64)) {
 	width, _, margin := MultiFloorGeometry(layout)
 	destY := margin
 	for _, floor := range layout.Floors {
@@ -54,7 +54,7 @@ func MultiFloorLoop(layout optishop.Layout, f func(f *optishop.Floor, x, y float
 }
 
 // DrawFloors draws every floor of a layout.
-func DrawFloors(canvas *svg.SVG, layout optishop.Layout) {
+func DrawFloors(canvas *svg.SVG, layout *optishop.Layout) {
 	width, _, _ := MultiFloorGeometry(layout)
 	fontSize := width * FontSizeFrac
 	MultiFloorLoop(layout, func(f *optishop.Floor, x, y float64) {
@@ -64,7 +64,7 @@ func DrawFloors(canvas *svg.SVG, layout optishop.Layout) {
 
 // DrawFloorPath traces out a path on a multi-floor
 // rendering.
-func DrawFloorPath(canvas *svg.SVG, layout optishop.Layout, path optishop.FloorPath) {
+func DrawFloorPath(canvas *svg.SVG, layout *optishop.Layout, path optishop.FloorPath) {
 	width, _, _ := MultiFloorGeometry(layout)
 	MultiFloorLoop(layout, func(f *optishop.Floor, x, y float64) {
 		for _, part := range path {

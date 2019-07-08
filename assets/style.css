@@ -40,3 +40,7 @@
 .search-result .name {
     display: block;
 }
+
+.route-image {
+    max-width: 500px;
+}

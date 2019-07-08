@@ -92,6 +92,7 @@ function updateRouteData(data) {
         entry.innerHTML = item.name + ' (Zone: ' + zone + ')';
         elem.appendChild(entry);
     });
+    document.getElementById('route-image').innerHTML = data.image;
 }
 
 window.addEventListener('load', () => {
