@@ -179,7 +179,7 @@ func (s *Server) renderSVG(points []optishop.FloorPoint, solution []int,
 	width, height, _ := visualize.MultiFloorGeometry(s.Store.Layout())
 
 	canvas := svg.New(output)
-	canvas.Start(width, height)
+	canvas.Start(width, height, fmt.Sprintf("viewbox=\"0 0 %.3f %.3f\"", width, height))
 
 	visualize.DrawFloors(canvas, s.Store.Layout())
 	for i := 0; i < len(solution)-1; i++ {

@@ -92,7 +92,11 @@ function updateRouteData(data) {
         entry.innerHTML = item.name + ' (Zone: ' + zone + ')';
         elem.appendChild(entry);
     });
-    document.getElementById('route-image').innerHTML = data.image;
+    const img = document.getElementById('route-image');
+    img.innerHTML = data.image;
+    const svg = img.getElementsByTagName('svg')[0];
+    svg.removeAttribute('width');
+    svg.removeAttribute('height');
 }
 
 window.addEventListener('load', () => {

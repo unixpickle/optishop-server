@@ -41,6 +41,6 @@
     display: block;
 }
 
-.route-image {
+#route-image {
     max-width: 500px;
 }
