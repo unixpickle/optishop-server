@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"flag"
+	"fmt"
 	"net/http"
 	"path/filepath"
 
@@ -28,6 +29,7 @@ func main() {
 	http.HandleFunc("/search", server.HandleSearch)
 	http.HandleFunc("/add", server.HandleAdd)
 	http.HandleFunc("/delete", server.HandleDelete)
+	http.HandleFunc("/route", server.HandleRoute)
 	http.ListenAndServe(args.Addr, nil)
 }
 
@@ -112,6 +114,58 @@ func (s *Server) HandleDelete(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	serveError(w, r, errors.New("no list item found"))
+}
+
+func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
+	var points []optishop.FloorPoint
+
+	layout := s.Store.Layout()
+	entrance := layout.Zone("entrance")
+	checkout := layout.Zone("checkout")
+	if entrance == nil || checkout == nil {
+		serveError(w, r, errors.New("missing either an entrance or a checkout"))
+		return
+	}
+	points = append(points, optishop.FloorPoint{
+		Point: entrance.Location,
+		Floor: layout.ZoneFloor(entrance),
+	})
+	for i, item := range s.List {
+		zone := s.Zones[i]
+		if zone == nil {
+			serveError(w, r, fmt.Errorf("could not locate: %s", item.Name()))
+			return
+		}
+		points = append(points, optishop.FloorPoint{
+			Point: zone.Location,
+			Floor: layout.ZoneFloor(zone),
+		})
+	}
+	points = append(points, optishop.FloorPoint{
+		Point: checkout.Location,
+		Floor: layout.ZoneFloor(checkout),
+	})
+
+	floorConn := optishop.NewFloorConnectorCached(layout)
+	distFunc := floorConn.DistanceFunc(points)
+	if distFunc == nil {
+		serveError(w, r, errors.New("cannot reach all points from all other points"))
+		return
+	}
+	solution := (optishop.FactorialTSPSolver{}).SolveTSP(len(points), distFunc)
+
+	var sortedItems []optishop.InventoryProduct
+	var sortedZones []*optishop.Zone
+	for _, i := range solution[1 : len(solution)-1] {
+		sortedItems = append(sortedItems, s.List[i-1])
+		sortedZones = append(sortedZones, s.Zones[i-1])
+	}
+
+	resultObj := map[string]interface{}{
+		"items": ConvertListItems(sortedItems),
+		"zones": sortedZones,
+	}
+	json.NewEncoder(w).Encode(resultObj)
 }
 
 func serveError(w http.ResponseWriter, r *http.Request, err error) {

@@ -78,7 +78,24 @@ function addListItem(rawData) {
     }).then((x) => x.json()).then(updateListData);
 }
 
+function updateRoute() {
+    fetch('/route').then((x) => x.json()).then(updateRouteData);
+}
+
+function updateRouteData(data) {
+    const elem = document.getElementById('route-contents');
+    elem.innerHTML = '';
+    data.items.forEach((item, i) => {
+        const zone = (data.zones[i] || {})['Name'];
+        const entry = document.createElement('li');
+        entry.className = 'entry';
+        entry.innerHTML = item.name + ' (Zone: ' + zone + ')';
+        elem.appendChild(entry);
+    });
+}
+
 window.addEventListener('load', () => {
     updateList();
     document.getElementById('search-button').addEventListener('click', runSearch);
+    document.getElementById('route-button').addEventListener('click', updateRoute);
 });
