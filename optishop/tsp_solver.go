@@ -1,6 +1,10 @@
 package optishop
 
-import "math"
+import (
+	"math"
+
+	"github.com/unixpickle/approb"
+)
 
 // A TSPSolver is an algorithm that (approximately) solves
 // Traveling salesman problems.
@@ -43,4 +47,35 @@ func (g GreedyTSPSolver) SolveTSP(n int, distance func(a, b int) float64) []int 
 	}
 	route = append(route, n-1)
 	return route
+}
+
+// FactorialTSPSolver is a TSPSolver that runs in O(n!)
+// time but finds exact solutions.
+type FactorialTSPSolver struct{}
+
+// SolveTSP generates an exact solution to the TSP in
+// O(n!) time.
+func (f FactorialTSPSolver) SolveTSP(n int, distance func(a, b int) float64) []int {
+	var bestSolution []int
+	bestDistance := math.Inf(1)
+
+	for perm := range approb.Perms(n - 2) {
+		solution := make([]int, 0, n)
+		solution = append(solution, 0)
+		for _, x := range perm {
+			solution = append(solution, x+1)
+		}
+		solution = append(solution, n-1)
+
+		var dist float64
+		for i := 0; i < len(solution)-1; i++ {
+			dist += distance(solution[i], solution[i+1])
+		}
+		if dist < bestDistance {
+			bestDistance = dist
+			bestSolution = solution
+		}
+	}
+
+	return bestSolution
 }
