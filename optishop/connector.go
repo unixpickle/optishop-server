@@ -54,15 +54,21 @@ func NewCacheConnector(bc BatchConnector) *CacheConnector {
 func (c *CacheConnector) Connect(a, b Point) Path {
 	if _, ok := c.cache[a]; !ok {
 		c.addPoint(a)
-	} else if _, ok := c.cache[b]; !ok {
+	}
+	if _, ok := c.cache[b]; !ok {
 		c.addPoint(b)
 	}
 	if path, ok := c.cache[a][b]; ok {
 		return path
+	} else if path, ok = c.cache[b][a]; ok {
+		if path == nil {
+			return path
+		}
+		rev := append(Path{}, path...)
+		essentials.Reverse(rev)
+		return rev
 	}
-	path := append(Path{}, c.cache[b][a]...)
-	essentials.Reverse(path)
-	return path
+	panic("no path in either direction")
 }
 
 func (c *CacheConnector) addPoint(p Point) {

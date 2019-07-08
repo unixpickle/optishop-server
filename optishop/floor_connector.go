@@ -76,6 +76,9 @@ func (f *FloorConnector) Connect(a, b FloorPoint) FloorPath {
 
 		if fp.Floor == b.Floor {
 			path := conn.Connect(fp.Point, b.Point)
+			if path == nil {
+				return
+			}
 			step := &FloorPathStep{
 				Floor: fp.Floor,
 				Path:  path,
@@ -87,6 +90,9 @@ func (f *FloorConnector) Connect(a, b FloorPoint) FloorPath {
 
 		for _, portal := range f.Layout.Floors[fp.Floor].Portals {
 			path := conn.Connect(fp.Point, portal.Location)
+			if path == nil {
+				continue
+			}
 			for _, dest := range portal.Destinations {
 				step := &FloorPathStep{
 					Floor:        fp.Floor,
@@ -123,16 +129,24 @@ func (f *FloorConnector) Connect(a, b FloorPoint) FloorPath {
 // between any two locations in a list of locations.
 //
 // This distance function can be used with a TSP solver.
+//
+// Returns nil if there are points that cannot reach each
+// other.
 func (f *FloorConnector) DistanceFunc(points []FloorPoint) func(idx1, idx2 int) float64 {
 	portalDist := f.portalDistance()
 	distances := make([][]float64, len(points))
 	for i, p := range points {
 		distances[i] = make([]float64, len(points))
 		for j, p1 := range points {
-			if i == j {
+			if p == p1 {
+				// Happens for items and themselves, and for items
+				// that are in the same aisle.
 				continue
 			}
 			path := f.Connect(p, p1)
+			if path == nil {
+				return nil
+			}
 			distances[i][j] = float64(len(path)) * portalDist
 			for _, part := range path {
 				distances[i][j] += part.Path.Length()
