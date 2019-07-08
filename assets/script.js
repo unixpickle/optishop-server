@@ -39,6 +39,9 @@ function showSearchResults(results) {
     const elem = document.getElementById('search-results');
     elem.innerHTML = '';
     results.results.forEach((result, i) => {
+        if (!result.inStock) {
+            return;
+        }
         const exactResult = results.exactResults[i];
         const photo = document.createElement('img');
         photo.className = 'photo';

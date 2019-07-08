@@ -50,9 +50,10 @@ type SearchItem struct {
 		FacetID string `json:"facet_id"`
 		Brand   string `json:"brand"`
 	} `json:"product_brand"`
-	Images             []*ProductImage `json:"images"`
-	AvailabilityStatus string          `json:"availability_status"`
-	Price              *ProductPrice   `json:"price"`
+	Images                []*ProductImage `json:"images"`
+	AvailabilityStatus    string          `json:"availability_status"`
+	SDSAvailabilityStatus string          `json:"scheduled_delivery_store_availability_status"`
+	Price                 *ProductPrice   `json:"price"`
 }
 
 // SearchResults stores results from a product search.
@@ -74,6 +75,7 @@ func (c *Client) Search(query, storeID string, offset int) (*SearchResults, erro
 	q.Add("keyword", query)
 	q.Add("offset", strconv.Itoa(offset))
 	q.Add("pricing_store_id", storeID)
+	q.Add("scheduled_delivery_store_id", storeID)
 	q.Add("store_ids", storeID)
 	q.Add("include_sponsored_search", "false")
 	q.Add("platform", "desktop")

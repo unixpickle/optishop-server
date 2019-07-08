@@ -28,7 +28,8 @@ func (i *inventoryProduct) Description() string {
 }
 
 func (i *inventoryProduct) InStock() bool {
-	return i.SearchItem.AvailabilityStatus == "IN_STOCK"
+	return i.SearchItem.SDSAvailabilityStatus == "IN_STOCK" ||
+		i.SearchItem.SDSAvailabilityStatus == "LIMITED_STOCK"
 }
 
 type Store struct {
