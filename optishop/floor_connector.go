@@ -6,7 +6,8 @@ import (
 	"github.com/unixpickle/essentials"
 )
 
-// A FloorPoint is a Point within a specific Floor.
+// A FloorPoint is a Point within a specific floor.
+// The floor is specified by its index within a Layout.
 type FloorPoint struct {
 	Point
 
@@ -116,6 +117,31 @@ func (f *FloorConnector) Connect(a, b FloorPoint) FloorPath {
 	}
 
 	return nil
+}
+
+// DistanceFunc creates a function that computes distances
+// between any two locations in a list of locations.
+//
+// This distance function can be used with a TSP solver.
+func (f *FloorConnector) DistanceFunc(points []FloorPoint) func(idx1, idx2 int) float64 {
+	portalDist := f.portalDistance()
+	distances := make([][]float64, len(points))
+	for i, p := range points {
+		distances[i] = make([]float64, len(points))
+		for j, p1 := range points {
+			if i == j {
+				continue
+			}
+			path := f.Connect(p, p1)
+			distances[i][j] = float64(len(path)) * portalDist
+			for _, part := range path {
+				distances[i][j] += part.Path.Length()
+			}
+		}
+	}
+	return func(i, j int) float64 {
+		return distances[i][j]
+	}
 }
 
 // portalDistance gets a relatively long distance that can
