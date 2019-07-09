@@ -33,20 +33,21 @@ type ProductPrice struct {
 
 // A SearchItem is a single result from a product search.
 type SearchItem struct {
-	Subscribable      bool               `json:"subscribable"`
-	PackageDimensions *PackageDimensions `json:"package_dimensions"`
-	Title             string             `json:"title"`
-	TCIN              string             `json:"tcin"`
-	Type              string             `json:"type"`
-	DPCI              string             `json:"dpci"`
-	UPC               string             `json:"upc"`
-	URL               string             `json:"url"`
-	Description       string             `json:"description"`
-	MerchSubClass     string             `json:"merch_sub_class"`
-	MerchClass        string             `json:"merch_class"`
-	MerchClassID      string             `json:"merch_class_id"`
-	Brand             string             `json:"brand"`
-	ProductBrand      struct {
+	Subscribable                  bool               `json:"subscribable"`
+	PackageDimensions             *PackageDimensions `json:"package_dimensions"`
+	Title                         string             `json:"title"`
+	TCIN                          string             `json:"tcin"`
+	Type                          string             `json:"type"`
+	DPCI                          string             `json:"dpci"`
+	UPC                           string             `json:"upc"`
+	URL                           string             `json:"url"`
+	Description                   string             `json:"description"`
+	RepresentativeChildPartNumber string             `json:"representative_child_part_number"`
+	MerchSubClass                 string             `json:"merch_sub_class"`
+	MerchClass                    string             `json:"merch_class"`
+	MerchClassID                  string             `json:"merch_class_id"`
+	Brand                         string             `json:"brand"`
+	ProductBrand                  struct {
 		FacetID string `json:"facet_id"`
 		Brand   string `json:"brand"`
 	} `json:"product_brand"`

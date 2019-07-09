@@ -9,7 +9,8 @@ import (
 )
 
 type inventoryProduct struct {
-	SearchItem *SearchItem
+	SearchItem  *SearchItem
+	ShipMethods *ShipMethodsResult
 }
 
 func (i *inventoryProduct) Name() string {
@@ -28,8 +29,7 @@ func (i *inventoryProduct) Description() string {
 }
 
 func (i *inventoryProduct) InStock() bool {
-	return i.SearchItem.SDSAvailabilityStatus == "IN_STOCK" ||
-		i.SearchItem.SDSAvailabilityStatus == "LIMITED_STOCK"
+	return i.ShipMethods != nil && i.ShipMethods.InStore()
 }
 
 func (i *inventoryProduct) Price() string {
@@ -75,10 +75,28 @@ func (s *Store) Search(query string) ([]optishop.InventoryProduct, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	ids := make([]string, len(results.Items.SearchItems))
+	for i, result := range results.Items.SearchItems {
+		ids[i] = result.RepresentativeChildPartNumber
+	}
+	shipMethods, err := ShipMethods(s.StoreID, ids)
+	if err != nil {
+		return nil, err
+	}
+	idToShipMethod := map[string]*ShipMethodsResult{}
+	for _, method := range shipMethods {
+		idToShipMethod[method.ProductID] = method
+	}
+
 	var products []optishop.InventoryProduct
 	for _, res := range results.Items.SearchItems {
-		products = append(products, &inventoryProduct{SearchItem: res})
+		products = append(products, &inventoryProduct{
+			SearchItem:  res,
+			ShipMethods: idToShipMethod[res.RepresentativeChildPartNumber],
+		})
 	}
+
 	return products, nil
 }
 
@@ -100,7 +118,7 @@ func (s *Store) Layout() *optishop.Layout {
 
 func (s *Store) Locate(prod optishop.InventoryProduct) (*optishop.Zone, error) {
 	item := prod.(*inventoryProduct).SearchItem
-	details, err := s.Client.ProductDetails(item.TCIN, s.StoreID)
+	details, err := s.Client.ProductDetails(item.RepresentativeChildPartNumber, s.StoreID)
 	if err != nil {
 		return nil, err
 	}
