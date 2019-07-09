@@ -53,6 +53,9 @@ function showSearchResults(results) {
         const name = document.createElement('label');
         name.className = 'name';
         name.innerHTML = result.name;
+        const price = document.createElement('label');
+        price.className = 'price';
+        price.innerText = result.price;
         const add = document.createElement('button');
         add.addEventListener('click', () => {
             addListItem(exactResult);
@@ -62,6 +65,7 @@ function showSearchResults(results) {
         entry.className = 'search-result';
         entry.appendChild(photo);
         entry.appendChild(name);
+        entry.appendChild(price);
         entry.appendChild(add);
         elem.appendChild(entry);
     });

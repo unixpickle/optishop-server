@@ -32,6 +32,10 @@ func (i *inventoryProduct) InStock() bool {
 		i.SearchItem.SDSAvailabilityStatus == "LIMITED_STOCK"
 }
 
+func (i *inventoryProduct) Price() string {
+	return i.SearchItem.Price.FormattedCurrentPrice
+}
+
 type Store struct {
 	StoreID      string
 	Client       *Client

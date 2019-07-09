@@ -41,6 +41,15 @@
     display: block;
 }
 
+.search-result .price {
+    display: block;
+}
+
+.search-result .price::before {
+    content: 'Price: ';
+    font-weight: bold;
+}
+
 #route-image {
     max-width: 500px;
 }

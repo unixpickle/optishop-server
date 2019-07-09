@@ -5,6 +5,7 @@ type InventoryProduct interface {
 	PhotoURL() string
 	Description() string
 	InStock() bool
+	Price() string
 }
 
 type Inventory interface {
