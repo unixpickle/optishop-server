@@ -84,48 +84,75 @@ func (p Polygon) PointAt(idx int) Point {
 	return p[idx%len(p)]
 }
 
-// Contains checks if the polygon contains a given point.
-func (p Polygon) Contains(p1 Point) bool {
-	p = p.Dedup()
-	numIntersections := 0
-	r := randomRay(p1)
+type lineSegment struct {
+	Start Point
+	End   Point
+}
+
+// A PolyContainer can check if a polygon contains any
+// arbitrary point.
+type PolyContainer struct {
+	intersectors []*rayIntersector
+}
+
+// NewPolyContainer creates a PolyContainer for the given
+// polygon.
+// This performs a lot of up-front computation that can be
+// amortized over the course of many containment checks.
+func NewPolyContainer(poly Polygon) *PolyContainer {
+	p := poly.Dedup()
+	res := &PolyContainer{}
 	for i, start := range p {
 		line := &lineSegment{Start: start, End: p.PointAt(i + 1)}
-		if rayIntersects(r, line) {
+		res.intersectors = append(res.intersectors, newRayIntersector(randomDirection, line))
+	}
+	return res
+}
+
+// Contains checks if the polygon contains a point.
+func (p *PolyContainer) Contains(point Point) bool {
+	numIntersections := 0
+	for _, intersector := range p.intersectors {
+		if intersector.Intersects(point) {
 			numIntersections++
 		}
 	}
 	return numIntersections%2 == 1
 }
 
-type ray struct {
-	Origin    Point
-	Direction Point
+// A rayIntersector checks if rays intersect a line
+// segment.
+// A rayIntersector is initialized with the direction of
+// the ray and the line segment to check, and then can
+// quickly check intersections for arbitrary ray starting
+// points.
+type rayIntersector struct {
+	mInv11 float64
+	mInv12 float64
+	mInv21 float64
+	mInv22 float64
+
+	start Point
 }
 
-func randomRay(o Point) *ray {
-	return &ray{
-		Origin:    o,
-		Direction: randomDirection,
-	}
-}
-
-type lineSegment struct {
-	Start Point
-	End   Point
-}
-
-func rayIntersects(r *ray, l *lineSegment) bool {
+func newRayIntersector(direction Point, l *lineSegment) *rayIntersector {
 	endToStart := l.End.Sub(l.Start)
-	m11, m12, m21, m22 := r.Direction.X, endToStart.X, r.Direction.Y, endToStart.Y
+	m11, m12, m21, m22 := direction.X, endToStart.X, direction.Y, endToStart.Y
 
 	// Inverse matrix formula for 2x2 matrices.
 	d := 1 / (m11*m22 - m12*m21)
-	mInv11, mInv12, mInv21, mInv22 := d*m22, -d*m12, -d*m21, d*m11
+	return &rayIntersector{
+		mInv11: d * m22,
+		mInv12: -d * m12,
+		mInv21: -d * m21,
+		mInv22: d * m11,
+		start:  l.Start,
+	}
+}
 
-	invInput := r.Origin.Sub(l.Start)
-	rayExtent := -(mInv11*invInput.X + mInv12*invInput.Y)
-	segmentExtent := mInv21*invInput.X + mInv22*invInput.Y
-
+func (r *rayIntersector) Intersects(origin Point) bool {
+	invInput := origin.Sub(r.start)
+	rayExtent := -(r.mInv11*invInput.X + r.mInv12*invInput.Y)
+	segmentExtent := r.mInv21*invInput.X + r.mInv22*invInput.Y
 	return rayExtent > 0 && segmentExtent > 0 && segmentExtent < 1
 }

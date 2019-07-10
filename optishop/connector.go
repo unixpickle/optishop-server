@@ -325,11 +325,12 @@ func (r *Raster) searchNodeToPath(node *connectorSearchNode, start, end Point) P
 }
 
 func (r *Raster) checkBoundaries(bounds Polygon) {
+	container := NewPolyContainer(bounds)
 	idx := 0
 	for y := 0; y < r.height; y++ {
 		for x := 0; x < r.width; x++ {
 			p := r.rasterToPoint(rasterPoint{X: x, Y: y})
-			if !bounds.Contains(p) {
+			if !container.Contains(p) {
 				r.obstructed[idx] = true
 			}
 			idx++
@@ -348,11 +349,12 @@ func (r *Raster) addToRaster(raster []bool, polygons []Polygon) {
 		minY = clampDim(minY, r.height)
 		maxX = clampDim(maxX, r.width)
 		maxY = clampDim(maxY, r.height)
+		container := NewPolyContainer(poly)
 		for i := minY; i <= maxY; i++ {
 			for j := minX; j <= maxX; j++ {
 				rp := rasterPoint{X: j, Y: i}
 				p := r.rasterToPoint(rp)
-				if poly.Contains(p) {
+				if container.Contains(p) {
 					raster[r.pointToIndex(rp)] = true
 				}
 			}

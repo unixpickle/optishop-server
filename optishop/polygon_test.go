@@ -2,6 +2,11 @@ package optishop
 
 import "testing"
 
+type ray struct {
+	Origin    Point
+	Direction Point
+}
+
 func TestRayIntersects(t *testing.T) {
 	rays := []*ray{
 		&ray{
@@ -46,7 +51,7 @@ func TestRayIntersects(t *testing.T) {
 		false,
 	}
 	for i, exp := range expected {
-		actual := rayIntersects(rays[i], segments[i])
+		actual := newRayIntersector(rays[i].Direction, segments[i]).Intersects(rays[i].Origin)
 		if actual != exp {
 			t.Errorf("case %d: expected %v but got %v", i, exp, actual)
 		}
@@ -84,8 +89,9 @@ func TestPolygonContains(t *testing.T) {
 		true,
 		false,
 	}
+	container := NewPolyContainer(poly)
 	for i, expected := range contained {
-		actual := poly.Contains(points[i])
+		actual := container.Contains(points[i])
 		if actual != expected {
 			t.Errorf("case %d: expected %v but got %v", i, expected, actual)
 		}
