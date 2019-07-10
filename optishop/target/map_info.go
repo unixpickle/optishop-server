@@ -62,6 +62,14 @@ func GetMapInfo(storeID string) (*MapInfo, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "get map info")
 	}
+
+	var errObj struct {
+		Error string `json:"error"`
+	}
+	if err := json.Unmarshal(data, &errObj); err == nil && errObj.Error != "" {
+		return nil, errors.New("get map info: " + errObj.Error)
+	}
+
 	var info MapInfo
 	if err := json.Unmarshal(data, &info); err != nil {
 		return nil, errors.Wrap(err, "get map info")
