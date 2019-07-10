@@ -60,7 +60,7 @@ func ShipMethods(storeID string, partIDs []string) ([]*ShipMethodsResult, error)
 
 	var response []struct {
 		Product struct {
-			ShipMethods ShipMethodsResult `json:"ship_methods"`
+			ShipMethods *ShipMethodsResult `json:"ship_methods"`
 		} `json:"product"`
 	}
 	if err := json.Unmarshal(data, &response); err != nil {
@@ -69,7 +69,9 @@ func ShipMethods(storeID string, partIDs []string) ([]*ShipMethodsResult, error)
 
 	var results []*ShipMethodsResult
 	for _, obj := range response {
-		results = append(results, &obj.Product.ShipMethods)
+		if obj.Product.ShipMethods != nil {
+			results = append(results, obj.Product.ShipMethods)
+		}
 	}
 
 	return results, nil
