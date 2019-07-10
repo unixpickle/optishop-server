@@ -36,6 +36,10 @@ func (s *ShipMethodsResult) InStore() bool {
 // Each product is identified by its representative child
 // part number.
 func ShipMethods(storeID string, partIDs []string) ([]*ShipMethodsResult, error) {
+	if len(partIDs) == 0 {
+		return nil, nil
+	}
+
 	joined := strings.Join(partIDs, ",")
 	q := url.Values{}
 
