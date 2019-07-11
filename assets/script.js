@@ -22,9 +22,16 @@ function updateListData(data) {
         const zoneName = document.createElement('label');
         zoneName.className = 'zone';
         zoneName.textContent = zone;
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'delete';
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', () => {
+            deleteListItem(item.name);
+        });
         entry.appendChild(photo);
         entry.appendChild(name);
         entry.appendChild(zoneName);
+        entry.appendChild(deleteButton);
         elem.appendChild(entry);
     });
 }
@@ -82,11 +89,19 @@ function addListItem(rawData) {
     }).then((x) => x.json()).then(updateListData);
 }
 
+function deleteListItem(name) {
+    fetch('/delete?name=' + encodeURIComponent(name)).then((x) => x.json()).then(updateListData);
+}
+
 function updateRoute() {
     fetch('/route').then((x) => x.json()).then(updateRouteData);
 }
 
 function updateRouteData(data) {
+    if (data.error) {
+        alert(data.error);
+        return;
+    }
     const elem = document.getElementById('route-contents');
     elem.innerHTML = '';
     data.items.forEach((item, i) => {
