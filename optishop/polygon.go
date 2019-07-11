@@ -3,6 +3,8 @@ package optishop
 import (
 	"math"
 	"math/rand"
+
+	"github.com/unixpickle/essentials"
 )
 
 var randomDirection Point
@@ -155,4 +157,131 @@ func (r *rayIntersector) Intersects(origin Point) bool {
 	rayExtent := -(r.mInv11*invInput.X + r.mInv12*invInput.Y)
 	segmentExtent := r.mInv21*invInput.X + r.mInv22*invInput.Y
 	return rayExtent > 0 && segmentExtent > 0 && segmentExtent < 1
+}
+
+// A ConvexPolygon is a polygon defined by all convex
+// combinations of its contained points.
+type ConvexPolygon []Point
+
+// ContainmentScore gets a number indicating where the
+// point p lies with respect to the polygon.
+// If the score is less than 0, then the point is outside
+// of the polygon. If the score is greater than 0, then
+// the point is inside of the polygon. If the score is 0,
+// then the point is on the edge of the polygon.
+func (c ConvexPolygon) ContainmentScore(p Point) float64 {
+	maxScore := math.Inf(-1)
+	for i := 0; i < len(c); i++ {
+		for j := i + 1; j < len(c); j++ {
+			for k := j + 1; k < len(c); k++ {
+				p1, p2, p3 := c[i], c[j], c[k]
+				score := triangleContainmentScore(p1, p2, p3, p)
+				maxScore = math.Max(score, maxScore)
+			}
+		}
+	}
+	return maxScore
+}
+
+// Prune removes redundant points in the polygon.
+func (c ConvexPolygon) Prune() ConvexPolygon {
+	epsilon := polygonEpsilon(c...)
+	res := ConvexPolygon{}
+	for _, p := range c {
+		score := c.ContainmentScore(p)
+		if score < epsilon {
+			res = append(res, p)
+		}
+	}
+	return res
+}
+
+// Polygon creates a Polygon that is equivalent to the
+// convex polygon.
+func (c ConvexPolygon) Polygon() Polygon {
+	pruned := c.Prune()
+
+	// Figure out the order of the points by noting that
+	// the angle from one point to all the others
+	// increases as you go around the polygon.
+	//
+	// We use the leftmost point as the reference point
+	// because the angle will never wrap around from -pi
+	// to pi.
+	leftmost := pruned.leftmostPoint()
+	angles := make([]float64, len(pruned))
+	res := Polygon(pruned)
+	for i, p := range res {
+		if p == leftmost {
+			angles[i] = math.Inf(-1)
+		} else {
+			angles[i] = math.Atan2(p.Y-leftmost.Y, p.X-leftmost.X)
+		}
+	}
+	essentials.VoodooSort(angles, func(i, j int) bool {
+		return angles[i] < angles[j]
+	}, res)
+	return res
+}
+
+func (c ConvexPolygon) leftmostPoint() Point {
+	minX := math.Inf(1)
+	res := Point{}
+	for _, p := range c {
+		if p.X < minX {
+			minX = p.X
+			res = p
+		}
+	}
+	return res
+}
+
+func triangleContainmentScore(p1, p2, p3, p Point) float64 {
+	epsilon := polygonEpsilon(p1, p2, p3)
+
+	v1 := p2.Sub(p1)
+	v2 := p3.Sub(p1)
+	m11, m12, m21, m22 := v1.X, v2.X, v1.Y, v2.Y
+
+	det := m11*m22 - m12*m21
+	if math.Abs(det) < epsilon {
+		return math.Inf(-1)
+	}
+
+	// Inverse matrix formula for 2x2 matrices.
+	d := 1 / det
+	mInv11 := d * m22
+	mInv12 := -d * m12
+	mInv21 := -d * m21
+	mInv22 := d * m11
+
+	targetVec := p.Sub(p1)
+	barycentricA := mInv11*targetVec.X + mInv12*targetVec.Y
+	barycentricB := mInv21*targetVec.X + mInv22*targetVec.Y
+	barycentricC := 1 - (barycentricA + barycentricB)
+
+	return math.Min(math.Min(barycentricScore(barycentricA), barycentricScore(barycentricB)),
+		barycentricScore(barycentricC))
+}
+
+func polygonEpsilon(ps ...Point) float64 {
+	minX := math.Inf(1)
+	minY := math.Inf(1)
+	maxX := math.Inf(-1)
+	maxY := math.Inf(-1)
+	for _, p := range ps {
+		minX = math.Min(minX, p.X)
+		minY = math.Min(minY, p.Y)
+		maxX = math.Max(maxX, p.X)
+		maxY = math.Max(maxY, p.Y)
+	}
+	return math.Max(1e-18, math.Max(maxX-minX, maxY-minY)*1e-8)
+}
+
+func barycentricScore(bc float64) float64 {
+	if bc < 0.5 {
+		return bc
+	} else {
+		return 1 - bc
+	}
 }
