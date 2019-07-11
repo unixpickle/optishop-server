@@ -91,7 +91,15 @@ type Floor struct {
 
 	// All areas (e.g. carpeted sections) which a shopper
 	// shouldn't go through unless it's a destination.
-	NonPreferred []Polygon
+	NonPreferred []*NonPreferred
+}
+
+type NonPreferred struct {
+	Bounds Polygon
+
+	// If true, render this area, perhaps as a carpeted
+	// section.
+	Visible bool
 }
 
 // Portal finds the portal with the given ID, or returns

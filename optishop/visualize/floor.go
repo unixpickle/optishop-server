@@ -25,7 +25,9 @@ func DrawPolygon(canvas *svg.SVG, poly optishop.Polygon, xOff, yOff float64, sty
 func DrawFloor(canvas *svg.SVG, floor *optishop.Floor, fontSize, xOff, yOff float64) {
 	DrawPolygon(canvas, floor.Bounds, xOff, yOff, "fill: white")
 	for _, nonPref := range floor.NonPreferred {
-		DrawPolygon(canvas, nonPref, xOff, yOff, "fill: #f0f0f0")
+		if nonPref.Visible {
+			DrawPolygon(canvas, nonPref.Bounds, xOff, yOff, "fill: #f0f0f0")
+		}
 	}
 	for _, obstacle := range floor.Obstacles {
 		DrawPolygon(canvas, obstacle, xOff, yOff, "fill: #d5d5d5")

@@ -56,7 +56,12 @@ func MapInfoToLayout(m *MapInfo) *optishop.Layout {
 func AddFloorDetails(src *FloorDetails, dst *optishop.Floor) {
 	dst.Bounds = src.Bounds
 	dst.Obstacles = src.Obstacles
-	dst.NonPreferred = src.FloorPads
+	for _, pad := range src.FloorPads {
+		dst.NonPreferred = append(dst.NonPreferred, &optishop.NonPreferred{
+			Bounds:  pad,
+			Visible: true,
+		})
+	}
 	for name, loc := range src.Aisles {
 		dst.Zones = append(dst.Zones, &optishop.Zone{
 			Name:     name,

@@ -146,7 +146,12 @@ func NewRasterSize(floor *Floor, width, height int) *Raster {
 
 	res.checkBoundaries(floor.Bounds)
 	res.addToRaster(res.obstructed, floor.Obstacles)
-	res.addToRaster(res.nonPreferred, floor.NonPreferred)
+
+	var nonPref []Polygon
+	for _, np := range floor.NonPreferred {
+		nonPref = append(nonPref, np.Bounds)
+	}
+	res.addToRaster(res.nonPreferred, nonPref)
 
 	return res
 }
