@@ -185,6 +185,9 @@ func (c ConvexPolygon) ContainmentScore(p Point) float64 {
 
 // Prune removes redundant points in the polygon.
 func (c ConvexPolygon) Prune() ConvexPolygon {
+	if len(c) <= 3 {
+		return c
+	}
 	epsilon := polygonEpsilon(c...)
 	res := ConvexPolygon{}
 	for _, p := range c {

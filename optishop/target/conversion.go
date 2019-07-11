@@ -1,6 +1,10 @@
 package target
 
-import "github.com/unixpickle/optishop-server/optishop"
+import (
+	"strings"
+
+	"github.com/unixpickle/optishop-server/optishop"
+)
 
 // Convert a MapInfo into a generic layout containing
 // portals and basic zone information.
@@ -66,6 +70,19 @@ func AddFloorDetails(src *FloorDetails, dst *optishop.Floor) {
 		dst.Zones = append(dst.Zones, &optishop.Zone{
 			Name:     name,
 			Location: loc,
+		})
+	}
+
+	var checkoutPolygon optishop.ConvexPolygon
+	for _, zone := range dst.Zones {
+		if strings.HasPrefix(zone.Name, "CL") || zone.Checkout {
+			checkoutPolygon = append(checkoutPolygon, zone.Location)
+		}
+	}
+	if len(checkoutPolygon) >= 3 {
+		dst.NonPreferred = append(dst.NonPreferred, &optishop.NonPreferred{
+			Bounds:  checkoutPolygon.Polygon(),
+			Visible: false,
 		})
 	}
 }
