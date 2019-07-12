@@ -122,6 +122,15 @@ func (s *Store) Locate(prod optishop.InventoryProduct) (*optishop.Zone, error) {
 	if err != nil {
 		return nil, err
 	}
-	zoneName := strings.Replace(details.Product.Location.BlockAisle, "-", "", -1)
-	return s.CachedLayout.Zone(zoneName), nil
+	names := []string{
+		strings.Replace(details.Product.Location.BlockAisle, "-", "", -1),
+		strings.ToLower(details.Product.Item.ProductClassification.ProductTypeName),
+	}
+	for _, name := range names {
+		zone := s.CachedLayout.Zone(name)
+		if zone != nil {
+			return zone, nil
+		}
+	}
+	return nil, nil
 }

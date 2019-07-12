@@ -18,6 +18,11 @@ type ProductDetails struct {
 			Section    int    `json:"section"`
 			BlockAisle string `json:"block_aisle"`
 		} `json:"in_store_location"`
+		Item struct {
+			ProductClassification struct {
+				ProductTypeName string `json:"product_type_name"`
+			} `json:"product_classification"`
+		} `json:"item"`
 	} `json:"product"`
 }
 
