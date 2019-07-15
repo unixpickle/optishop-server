@@ -198,13 +198,13 @@ func (f *FileDB) RemoveListEntry(user UserID, store StoreID, entry ListEntryID) 
 
 func (f *FileDB) usernameDir(username string) string {
 	nameHash := sha256.Sum256([]byte(username))
-	nameStr := base64.StdEncoding.EncodeToString(nameHash[:])
+	nameStr := base64.URLEncoding.EncodeToString(nameHash[:])
 	return filepath.Join(f.Dir, nameStr)
 }
 
 func (f *FileDB) listField(storeID StoreID) string {
 	nameHash := sha256.Sum256([]byte(storeID))
-	nameStr := base64.StdEncoding.EncodeToString(nameHash[:])
+	nameStr := base64.URLEncoding.EncodeToString(nameHash[:])
 	return fileDBListPrefix + nameStr
 }
 
@@ -243,5 +243,5 @@ func randomUID() (string, error) {
 	if _, err := rand.Read(data); err != nil {
 		return "", err
 	}
-	return base64.StdEncoding.EncodeToString(data), nil
+	return base64.URLEncoding.EncodeToString(data), nil
 }
