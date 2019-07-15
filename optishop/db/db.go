@@ -34,10 +34,10 @@ type ListEntryInfo struct {
 type DB interface {
 	CreateUser(username, password string) (UserID, error)
 	Login(username, password string) (UserID, error)
-	Stores(user UserID) ([]*StoreInfo, error)
-	AddStore(user UserID, info *StoreInfo) error
+	Stores(user UserID) ([]*StoreRecord, error)
+	AddStore(user UserID, info *StoreInfo) (StoreID, error)
 	RemoveStore(user UserID, store StoreID) error
 	ListEntries(user UserID, store StoreID) ([]*ListEntry, error)
-	AddListEntry(user UserID, store StoreID, info *ListEntryInfo) error
+	AddListEntry(user UserID, store StoreID, info *ListEntryInfo) (ListEntryID, error)
 	RemoveListEntry(user UserID, store StoreID, entry ListEntryID) error
 }
