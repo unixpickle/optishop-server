@@ -4,11 +4,11 @@ package db
 
 import "github.com/unixpickle/optishop-server/optishop"
 
-type UserID interface{}
+type UserID string
 
-type StoreID interface{}
+type StoreID string
 
-type ListEntryID interface{}
+type ListEntryID string
 
 type StoreRecord struct {
 	ID   StoreID
@@ -32,6 +32,7 @@ type ListEntryInfo struct {
 }
 
 type DB interface {
+	CreateUser(username, password string) (UserID, error)
 	Login(username, password string) (UserID, error)
 	Stores(user UserID) ([]*StoreInfo, error)
 	AddStore(user UserID, info *StoreInfo) error
