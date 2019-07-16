@@ -32,8 +32,10 @@ type ListEntryInfo struct {
 }
 
 type DB interface {
-	CreateUser(username, password string) (UserID, error)
+	CreateUser(username, password string, metadata map[string]string) (UserID, error)
 	Login(username, password string) (UserID, error)
+	UserMetadata(user UserID, field string) (string, error)
+	SetUserMetadata(user UserID, field, value string) error
 	Stores(user UserID) ([]*StoreRecord, error)
 	AddStore(user UserID, info *StoreInfo) (StoreID, error)
 	RemoveStore(user UserID, store StoreID) error

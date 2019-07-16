@@ -10,17 +10,17 @@ import (
 // empty database.
 func runGenericTests(t *testing.T, db DB) {
 	t.Run("Users", func(t *testing.T) {
-		uid1, err := db.CreateUser("bob", "pass")
+		uid1, err := db.CreateUser("bob", "pass", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := db.CreateUser("bob", "pass"); err == nil {
+		if _, err := db.CreateUser("bob", "pass", nil); err == nil {
 			t.Error("account creation should have failed (with same password)")
 		}
-		if _, err := db.CreateUser("bob", "aoeu"); err == nil {
+		if _, err := db.CreateUser("bob", "aoeu", nil); err == nil {
 			t.Error("account creation should have failed (with different password)")
 		}
-		uid2, err := db.CreateUser("joe", "ssap")
+		uid2, err := db.CreateUser("joe", "ssap", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -38,8 +38,41 @@ func runGenericTests(t *testing.T, db DB) {
 		}
 	})
 
+	t.Run("Metadata", func(t *testing.T) {
+		uid1, err := db.CreateUser("metaTester", "pass", map[string]string{"secret": "hi"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		uid2, err := db.CreateUser("metaTester2", "pass", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if data, err := db.UserMetadata(uid1, "secret"); err != nil {
+			t.Error(err)
+		} else if data != "hi" {
+			t.Error("unexpected data:", data)
+		}
+		if _, err := db.UserMetadata(uid2, "secret"); err == nil {
+			t.Error("expected error when reading metadata")
+		}
+
+		db.SetUserMetadata(uid1, "secret", "hey")
+		if data, err := db.UserMetadata(uid1, "secret"); err != nil {
+			t.Error(err)
+		} else if data != "hey" {
+			t.Error("unexpected data:", data)
+		}
+
+		db.SetUserMetadata(uid2, "secret", "hello")
+		if data, err := db.UserMetadata(uid2, "secret"); err != nil {
+			t.Error(err)
+		} else if data != "hello" {
+			t.Error("unexpected data:", data)
+		}
+	})
+
 	t.Run("Stores", func(t *testing.T) {
-		user, err := db.CreateUser("storeTester", "pass")
+		user, err := db.CreateUser("storeTester", "pass", nil)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -105,7 +138,7 @@ func runGenericTests(t *testing.T, db DB) {
 	})
 
 	t.Run("Lists", func(t *testing.T) {
-		user, err := db.CreateUser("listTester", "pass")
+		user, err := db.CreateUser("listTester", "pass", nil)
 		if err != nil {
 			t.Fatal(err)
 		}

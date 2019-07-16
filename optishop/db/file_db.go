@@ -5,10 +5,12 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
+	"unicode"
 
 	"github.com/unixpickle/essentials"
 
@@ -20,6 +22,7 @@ const (
 	fileDBHash       = "hash"
 	fileDBStores     = "stores"
 	fileDBListPrefix = "store_"
+	fileDBMeta       = "meta_"
 )
 
 // A FileDB uses the filesystem for an extremely simple
@@ -29,7 +32,16 @@ type FileDB struct {
 	lock sync.RWMutex
 }
 
-func (f *FileDB) CreateUser(username, password string) (UserID, error) {
+// NewFileDB creates a FileDB at the given directory path,
+// creating the directory if necessary.
+func NewFileDB(path string) (*FileDB, error) {
+	if err := os.Mkdir(path, 0700); err != nil && !os.IsExist(err) {
+		return nil, err
+	}
+	return &FileDB{Dir: path}, nil
+}
+
+func (f *FileDB) CreateUser(username, password string, metadata map[string]string) (UserID, error) {
 	f.lock.Lock()
 	defer f.lock.Unlock()
 
@@ -41,7 +53,7 @@ func (f *FileDB) CreateUser(username, password string) (UserID, error) {
 		return "", errors.Wrap(err, "create user")
 	}
 
-	if err := f.setupNewUserFields(username, password); err != nil {
+	if err := f.setupNewUserFields(username, password, metadata); err != nil {
 		os.RemoveAll(userDir)
 		return "", errors.Wrap(err, "create user")
 	}
@@ -49,7 +61,7 @@ func (f *FileDB) CreateUser(username, password string) (UserID, error) {
 	return UserID(username), nil
 }
 
-func (f *FileDB) setupNewUserFields(username, password string) error {
+func (f *FileDB) setupNewUserFields(username, password string, metadata map[string]string) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -59,6 +71,35 @@ func (f *FileDB) setupNewUserFields(username, password string) error {
 	}
 	if err := f.encodeUserField(username, fileDBStores, []*StoreRecord{}); err != nil {
 		return err
+	}
+	for field, value := range metadata {
+		if err := validateMetadataFieldName(field); err != nil {
+			return err
+		}
+		if err := f.writeUserField(username, fileDBMeta+field, []byte(value)); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (f *FileDB) UserMetadata(user UserID, field string) (string, error) {
+	if err := validateMetadataFieldName(field); err != nil {
+		return "", errors.Wrap(err, "get user metadata field")
+	}
+	data, err := f.readUserField(string(user), fileDBMeta+field)
+	if err != nil {
+		return "", errors.Wrap(err, "get user metadata field")
+	}
+	return string(data), nil
+}
+
+func (f *FileDB) SetUserMetadata(user UserID, field, value string) error {
+	if err := validateMetadataFieldName(field); err != nil {
+		return errors.Wrap(err, "set user metadata field")
+	}
+	if err := f.writeUserField(string(user), fileDBMeta+field, []byte(value)); err != nil {
+		return errors.Wrap(err, "set user metadata field")
 	}
 	return nil
 }
@@ -244,4 +285,13 @@ func randomUID() (string, error) {
 		return "", err
 	}
 	return base64.URLEncoding.EncodeToString(data), nil
+}
+
+func validateMetadataFieldName(name string) error {
+	for _, x := range []rune(name) {
+		if !unicode.IsLetter(x) && !unicode.IsNumber(x) && x != '_' {
+			return fmt.Errorf("disallowed character in metadata field: %c", x)
+		}
+	}
+	return nil
 }
