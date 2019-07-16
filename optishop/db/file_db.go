@@ -84,6 +84,8 @@ func (f *FileDB) setupNewUserFields(username, password string, metadata map[stri
 }
 
 func (f *FileDB) UserMetadata(user UserID, field string) (string, error) {
+	f.lock.RLock()
+	defer f.lock.RUnlock()
 	if err := validateMetadataFieldName(field); err != nil {
 		return "", errors.Wrap(err, "get user metadata field")
 	}
@@ -95,6 +97,8 @@ func (f *FileDB) UserMetadata(user UserID, field string) (string, error) {
 }
 
 func (f *FileDB) SetUserMetadata(user UserID, field, value string) error {
+	f.lock.Lock()
+	defer f.lock.Unlock()
 	if err := validateMetadataFieldName(field); err != nil {
 		return errors.Wrap(err, "set user metadata field")
 	}
