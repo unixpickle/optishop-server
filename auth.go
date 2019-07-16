@@ -10,8 +10,14 @@ import (
 
 type UserKeyType int
 
+// UserKey is the context key used to store a db.UserID.
 var UserKey UserKeyType
 
+// AuthHandler wraps an HTTP handler to ensure that the
+// handler is only called for authenticated requests.
+//
+// The handler will get a UserKey added to its request
+// context.
 func AuthHandler(d db.DB, f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, ok := checkAuth(d, r)
