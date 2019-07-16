@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/unixpickle/optishop-server/optishop/db"
 )
@@ -22,7 +24,11 @@ func AuthHandler(d db.DB, f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, ok := checkAuth(d, r)
 		if !ok {
-			http.Redirect(w, r, "/login", http.StatusSeeOther)
+			if strings.HasPrefix(r.URL.Path, "/api/") {
+				serveError(w, r, errors.New("not authenticated"))
+			} else {
+				http.Redirect(w, r, "/login", http.StatusSeeOther)
+			}
 		} else {
 			f(w, r.WithContext(context.WithValue(r.Context(), UserKey, user)))
 		}
