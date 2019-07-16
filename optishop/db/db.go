@@ -1,5 +1,5 @@
 // Package db implements the database for the backend of
-// the optishop server.package db
+// the optishop server.
 package db
 
 import "github.com/unixpickle/optishop-server/optishop"
