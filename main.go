@@ -35,7 +35,10 @@ func main() {
 	http.HandleFunc("/signup", server.HandleSignup)
 	http.HandleFunc("/api/addstore", AuthHandler(server.DB, server.HandleAddStoreAPI))
 	http.HandleFunc("/api/chpass", AuthHandler(server.DB, server.HandleChpassAPI))
-	http.HandleFunc("/api/list", AuthHandler(server.DB, server.HandleListAPI))
+	http.HandleFunc("/api/inventoryquery", AuthHandler(server.DB,
+		StoreHandler(server.DB, server.StoreCache, server.HandleInventoryQueryAPI)))
+	http.HandleFunc("/api/list", AuthHandler(server.DB,
+		StoreHandler(server.DB, server.StoreCache, server.HandleListAPI)))
 	http.HandleFunc("/api/storequery", AuthHandler(server.DB, server.HandleStoreQueryAPI))
 	http.HandleFunc("/api/stores", AuthHandler(server.DB, server.HandleStoresAPI))
 	http.ListenAndServe(args.Addr, nil)
@@ -179,21 +182,44 @@ func (s *Server) HandleChpassAPI(w http.ResponseWriter, r *http.Request) {
 	serveObject(w, r, map[string]string{})
 }
 
+func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(UserKey).(db.UserID)
+	storeID := r.Context().Value(StoreIDKey).(db.StoreID)
+	store := r.Context().Value(StoreKey).(optishop.Store)
+
+	sigKey, err := s.DB.UserMetadata(user, SignatureKey)
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+
+	rawResults, err := store.Search(r.FormValue("query"))
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+
+	var results []*ClientInventoryItem
+	for _, result := range rawResults {
+		data, err := store.MarshalProduct(result)
+		if err != nil {
+			serveError(w, r, err)
+			return
+		}
+		results = append(results, &ClientInventoryItem{
+			ClientListItem: NewClientListItem(result),
+			Data:           data,
+			Signature:      SignInventoryItem(sigKey, storeID, data),
+		})
+	}
+
+	serveObject(w, r, results)
+}
+
 func (s *Server) HandleListAPI(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(UserKey).(db.UserID)
-	storeID := db.StoreID(r.FormValue("store"))
-
-	storeRecord, err := s.DB.Store(user, storeID)
-	if err != nil {
-		serveError(w, r, err)
-		return
-	}
-
-	store, err := s.StoreCache.GetStore(storeRecord.Info.SourceName, storeRecord.Info.StoreData)
-	if err != nil {
-		serveError(w, r, err)
-		return
-	}
+	storeID := r.Context().Value(StoreIDKey).(db.StoreID)
+	store := r.Context().Value(StoreKey).(optishop.Store)
 
 	listEntries, err := s.DB.ListEntries(user, storeID)
 	if err != nil {
@@ -201,20 +227,14 @@ func (s *Server) HandleListAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var results []*ListItem
+	var results []*ClientListItem
 	for _, entry := range listEntries {
 		invProd, err := store.UnmarshalProduct(entry.Info.InventoryProductData)
 		if err != nil {
 			serveError(w, r, err)
 			return
 		}
-		results = append(results, &ListItem{
-			Name:        invProd.Name(),
-			PhotoURL:    invProd.PhotoURL(),
-			Description: invProd.Description(),
-			InStock:     invProd.InStock(),
-			Price:       invProd.Price(),
-		})
+		results = append(results, NewClientListItem(invProd))
 	}
 
 	serveObject(w, r, results)
@@ -229,7 +249,7 @@ func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {
 
 	query := r.FormValue("query")
 
-	var responses []*StoreDesc
+	var responses []*ClientStoreDesc
 	for name, source := range s.Sources {
 		results, err := source.QueryStores(query)
 		if err != nil {
@@ -242,7 +262,7 @@ func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {
 				serveError(w, r, err)
 				return
 			}
-			responses = append(responses, &StoreDesc{
+			responses = append(responses, &ClientStoreDesc{
 				Source:  name,
 				Name:    result.Name(),
 				Address: result.Address(),
