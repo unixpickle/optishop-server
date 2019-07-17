@@ -83,6 +83,29 @@ func (f *FileDB) setupNewUserFields(username, password string, metadata map[stri
 	return nil
 }
 
+func (f *FileDB) Chpass(user UserID, old, new string) error {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
+	hash, err := f.readUserField(string(user), fileDBHash)
+	if err != nil {
+		return errors.Wrap(err, "change password")
+	}
+	if bcrypt.CompareHashAndPassword(hash, []byte(old)) != nil {
+		return errors.New("change password: incorrect old password")
+	}
+
+	hash, err = bcrypt.GenerateFromPassword([]byte(new), bcrypt.DefaultCost)
+	if err != nil {
+		return errors.Wrap(err, "change password")
+	}
+	if err := f.writeUserField(string(user), fileDBHash, hash); err != nil {
+		return errors.Wrap(err, "change password")
+	}
+
+	return nil
+}
+
 func (f *FileDB) UserMetadata(user UserID, field string) (string, error) {
 	f.lock.RLock()
 	defer f.lock.RUnlock()

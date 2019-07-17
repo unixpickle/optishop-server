@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
-	"errors"
+	"crypto/rand"
+	"encoding/base64"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/unixpickle/optishop-server/optishop/db"
 )
 
@@ -15,6 +17,16 @@ type UserKeyType int
 
 // UserKey is the context key used to store a db.UserID.
 var UserKey UserKeyType
+
+// GenerateSecret generates a random string which is
+// cryptographically unpredictable.
+func GenerateSecret() (string, error) {
+	data := make([]byte, 32)
+	if _, err := rand.Read(data); err != nil {
+		return "", errors.Wrap(err, "generate secret")
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
+}
 
 // SetAuthCookie sets a user cookie for a request.
 func SetAuthCookie(w http.ResponseWriter, user db.UserID, secret string) {

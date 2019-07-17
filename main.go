@@ -1,14 +1,13 @@
 package main
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"net/http"
 	"net/url"
 	"path/filepath"
 
+	"github.com/pkg/errors"
 	"github.com/unixpickle/essentials"
 	"github.com/unixpickle/optishop-server/optishop/db"
 )
@@ -28,6 +27,7 @@ func main() {
 	http.HandleFunc("/", server.HandleGeneral)
 	http.HandleFunc("/login", server.HandleLogin)
 	http.HandleFunc("/signup", server.HandleSignup)
+	http.HandleFunc("/api/chpass", AuthHandler(server.DB, server.HandleChpassAPI))
 	http.HandleFunc("/api/stores", AuthHandler(server.DB, server.HandleStoresAPI))
 	http.ListenAndServe(args.Addr, nil)
 }
@@ -75,12 +75,11 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := make([]byte, 32)
-	if _, err := rand.Read(data); err != nil {
+	secret, err := GenerateSecret()
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	secret := base64.StdEncoding.EncodeToString(data)
 	metadata := map[string]string{
 		"secret": secret,
 	}
@@ -93,6 +92,26 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 
 	SetAuthCookie(w, userID, secret)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (s *Server) HandleChpassAPI(w http.ResponseWriter, r *http.Request) {
+	secret, err := GenerateSecret()
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+	user := r.Context().Value(UserKey).(db.UserID)
+	old := r.FormValue("old")
+	new := r.FormValue("new")
+	if err := s.DB.Chpass(user, old, new); err != nil {
+		serveError(w, r, err)
+		return
+	}
+	if err := s.DB.SetUserMetadata(user, "secret", secret); err != nil {
+		serveError(w, r, errors.New("failed to log out other sessions"))
+		return
+	}
+	SetAuthCookie(w, user, secret)
 }
 
 func (s *Server) HandleStoresAPI(w http.ResponseWriter, r *http.Request) {

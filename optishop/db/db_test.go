@@ -36,6 +36,24 @@ func runGenericTests(t *testing.T, db DB) {
 		if uid, err := db.Login("joe", "ssap"); err != nil || uid != uid2 {
 			t.Errorf("incorrect login result: %v, %v", uid, err)
 		}
+		if err := db.Chpass(uid1, "pass", "pass1"); err != nil {
+			t.Error(err)
+		}
+		if err := db.Chpass(uid1, "pass", "pass1"); err == nil {
+			t.Error("chpass should have failed")
+		}
+		if uid, err := db.Login("bob", "pass1"); err != nil || uid != uid1 {
+			t.Error("login failed:", err)
+		}
+		if _, err := db.Login("bob", "pass"); err == nil {
+			t.Error("login should fail with old password")
+		}
+
+		// Make sure changing the password didn't affect
+		// the other user.
+		if uid, err := db.Login("joe", "ssap"); err != nil || uid != uid2 {
+			t.Error("login failed:", err)
+		}
 	})
 
 	t.Run("Metadata", func(t *testing.T) {
