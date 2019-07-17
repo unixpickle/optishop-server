@@ -206,9 +206,9 @@ func (s *Server) HandleAddStoreAPI(w http.ResponseWriter, r *http.Request) {
 	})
 	if err != nil {
 		serveError(w, r, err)
-	} else {
-		serveObject(w, r, storeID)
+		return
 	}
+	serveObject(w, r, storeID)
 }
 
 func (s *Server) HandleChpassAPI(w http.ResponseWriter, r *http.Request) {
@@ -353,9 +353,9 @@ func (s *Server) HandleStoresAPI(w http.ResponseWriter, r *http.Request) {
 	stores, err := s.DB.Stores(user)
 	if err != nil {
 		serveError(w, r, err)
-	} else {
-		serveObject(w, r, stores)
+		return
 	}
+	serveObject(w, r, stores)
 }
 
 func serveError(w http.ResponseWriter, r *http.Request, err error) {
