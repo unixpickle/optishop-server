@@ -41,6 +41,9 @@ func main() {
 		StoreHandler(server.DB, server.StoreCache, server.HandleInventoryQueryAPI)))
 	http.HandleFunc("/api/list", AuthHandler(server.DB,
 		StoreHandler(server.DB, server.StoreCache, server.HandleListAPI)))
+	http.HandleFunc("/api/removeitem", AuthHandler(server.DB,
+		StoreHandler(server.DB, server.StoreCache, server.HandleRemoveItemAPI)))
+	http.HandleFunc("/api/removestore", AuthHandler(server.DB, server.HandleRemoveStoreAPI))
 	http.HandleFunc("/api/storequery", AuthHandler(server.DB, server.HandleStoreQueryAPI))
 	http.HandleFunc("/api/stores", AuthHandler(server.DB, server.HandleStoresAPI))
 	http.ListenAndServe(args.Addr, nil)
@@ -287,11 +290,33 @@ func (s *Server) HandleListAPI(w http.ResponseWriter, r *http.Request) {
 	serveObject(w, r, results)
 }
 
+func (s *Server) HandleRemoveItemAPI(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(UserKey).(db.UserID)
+	store := db.StoreID(r.FormValue("store"))
+	item := db.ListEntryID(r.FormValue("item"))
+	if err := s.DB.RemoveListEntry(user, store, item); err != nil {
+		serveError(w, r, err)
+		return
+	}
+	s.HandleListAPI(w, r)
+}
+
+func (s *Server) HandleRemoveStoreAPI(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(UserKey).(db.UserID)
+	store := db.StoreID(r.FormValue("store"))
+	if err := s.DB.RemoveStore(user, store); err != nil {
+		serveError(w, r, err)
+		return
+	}
+	s.HandleStoresAPI(w, r)
+}
+
 func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(UserKey).(db.UserID)
 	sigKey, err := s.DB.UserMetadata(user, SignatureKey)
 	if err != nil {
 		serveError(w, r, err)
+		return
 	}
 
 	query := r.FormValue("query")
