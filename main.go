@@ -33,6 +33,8 @@ func main() {
 	http.HandleFunc("/", server.HandleGeneral)
 	http.HandleFunc("/login", server.HandleLogin)
 	http.HandleFunc("/signup", server.HandleSignup)
+	http.HandleFunc("/api/additem", AuthHandler(server.DB,
+		StoreHandler(server.DB, server.StoreCache, server.HandleAddItemAPI)))
 	http.HandleFunc("/api/addstore", AuthHandler(server.DB, server.HandleAddStoreAPI))
 	http.HandleFunc("/api/chpass", AuthHandler(server.DB, server.HandleChpassAPI))
 	http.HandleFunc("/api/inventoryquery", AuthHandler(server.DB,
@@ -112,6 +114,51 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 
 	SetAuthCookie(w, userID, secret)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(UserKey).(db.UserID)
+	storeID := r.Context().Value(StoreIDKey).(db.StoreID)
+	store := r.Context().Value(StoreKey).(optishop.Store)
+
+	var data []byte
+	if err := json.Unmarshal([]byte(r.FormValue("data")), &data); err != nil {
+		serveError(w, r, err)
+		return
+	}
+
+	sigKey, err := s.DB.UserMetadata(user, SignatureKey)
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+
+	if SignInventoryItem(sigKey, storeID, data) != r.FormValue("signature") {
+		serveError(w, r, errors.New("invalid signature"))
+		return
+	}
+
+	product, err := store.UnmarshalProduct(data)
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+	zone, err := store.Locate(product)
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+
+	_, err = s.DB.AddListEntry(user, storeID, &db.ListEntryInfo{
+		InventoryProductData: data,
+		Zone:                 zone,
+	})
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+
+	s.HandleListAPI(w, r)
 }
 
 func (s *Server) HandleAddStoreAPI(w http.ResponseWriter, r *http.Request) {
