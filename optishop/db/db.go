@@ -38,6 +38,7 @@ type DB interface {
 	UserMetadata(user UserID, field string) (string, error)
 	SetUserMetadata(user UserID, field, value string) error
 	Stores(user UserID) ([]*StoreRecord, error)
+	Store(user UserID, store StoreID) (*StoreRecord, error)
 	AddStore(user UserID, info *StoreInfo) (StoreID, error)
 	RemoveStore(user UserID, store StoreID) error
 	ListEntries(user UserID, store StoreID) ([]*ListEntry, error)

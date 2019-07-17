@@ -157,6 +157,19 @@ func (f *FileDB) Stores(user UserID) ([]*StoreRecord, error) {
 	return stores, nil
 }
 
+func (f *FileDB) Store(user UserID, store StoreID) (*StoreRecord, error) {
+	stores, err := f.Stores(user)
+	if err != nil {
+		return nil, errors.Wrap(err, "get store")
+	}
+	for _, x := range stores {
+		if x.ID == store {
+			return x, nil
+		}
+	}
+	return nil, errors.New("get store: store not found")
+}
+
 func (f *FileDB) AddStore(user UserID, info *StoreInfo) (StoreID, error) {
 	uid, err := randomUID()
 	if err != nil {

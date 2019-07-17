@@ -25,24 +25,27 @@ func main() {
 	essentials.Must(err)
 
 	server := &Server{
-		AssetDir: args.AssetDir,
-		DB:       db,
-		Sources:  sources,
+		AssetDir:   args.AssetDir,
+		DB:         db,
+		Sources:    sources,
+		StoreCache: NewStoreCache(sources),
 	}
 	http.HandleFunc("/", server.HandleGeneral)
 	http.HandleFunc("/login", server.HandleLogin)
 	http.HandleFunc("/signup", server.HandleSignup)
 	http.HandleFunc("/api/addstore", AuthHandler(server.DB, server.HandleAddStoreAPI))
 	http.HandleFunc("/api/chpass", AuthHandler(server.DB, server.HandleChpassAPI))
-	http.HandleFunc("/api/storequery", AuthHandler(server.DB, server.HandleStoreQuery))
+	http.HandleFunc("/api/list", AuthHandler(server.DB, server.HandleListAPI))
+	http.HandleFunc("/api/storequery", AuthHandler(server.DB, server.HandleStoreQueryAPI))
 	http.HandleFunc("/api/stores", AuthHandler(server.DB, server.HandleStoresAPI))
 	http.ListenAndServe(args.Addr, nil)
 }
 
 type Server struct {
-	AssetDir string
-	DB       db.DB
-	Sources  map[string]optishop.StoreSource
+	AssetDir   string
+	DB         db.DB
+	Sources    map[string]optishop.StoreSource
+	StoreCache *StoreCache
 }
 
 func (s *Server) HandleGeneral(w http.ResponseWriter, r *http.Request) {
@@ -173,9 +176,51 @@ func (s *Server) HandleChpassAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	SetAuthCookie(w, user, secret)
+	serveObject(w, r, map[string]string{})
 }
 
-func (s *Server) HandleStoreQuery(w http.ResponseWriter, r *http.Request) {
+func (s *Server) HandleListAPI(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(UserKey).(db.UserID)
+	storeID := db.StoreID(r.FormValue("store"))
+
+	storeRecord, err := s.DB.Store(user, storeID)
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+
+	store, err := s.StoreCache.GetStore(storeRecord.Info.SourceName, storeRecord.Info.StoreData)
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+
+	listEntries, err := s.DB.ListEntries(user, storeID)
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+
+	var results []*ListItem
+	for _, entry := range listEntries {
+		invProd, err := store.UnmarshalProduct(entry.Info.InventoryProductData)
+		if err != nil {
+			serveError(w, r, err)
+			return
+		}
+		results = append(results, &ListItem{
+			Name:        invProd.Name(),
+			PhotoURL:    invProd.PhotoURL(),
+			Description: invProd.Description(),
+			InStock:     invProd.InStock(),
+			Price:       invProd.Price(),
+		})
+	}
+
+	serveObject(w, r, results)
+}
+
+func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(UserKey).(db.UserID)
 	sigKey, err := s.DB.UserMetadata(user, SignatureKey)
 	if err != nil {

@@ -136,6 +136,12 @@ func runGenericTests(t *testing.T, db DB) {
 			t.Error("incorrect fields for second store")
 		}
 
+		if store, err := db.Store(user, newID2); err != nil {
+			t.Error(err)
+		} else if store.ID != newID2 {
+			t.Error("unexpected result")
+		}
+
 		if err := db.RemoveStore(user, newID1); err != nil {
 			t.Fatal(err)
 		}
@@ -152,6 +158,9 @@ func runGenericTests(t *testing.T, db DB) {
 		if stores[0].ID != newID2 || stores[0].Info.SourceName != "walmart" ||
 			stores[0].Info.StoreName != "mart" || string(stores[0].Info.StoreData) != "goodbye" {
 			t.Error("incorrect fields for first store")
+		}
+		if _, err := db.Store(user, newID1); err == nil {
+			t.Error("expected error")
 		}
 	})
 
