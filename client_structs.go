@@ -29,3 +29,12 @@ func ConvertListItems(list []optishop.InventoryProduct) []*ListItem {
 	}
 	return res
 }
+
+type StoreDesc struct {
+	Source  string `json:"source"`
+	Name    string `json:"name"`
+	Address string `json:"address"`
+	Data    []byte `json:"data"`
+
+	Signature string `json:"signature"`
+}

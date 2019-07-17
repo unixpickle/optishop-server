@@ -18,6 +18,10 @@ type UserKeyType int
 // UserKey is the context key used to store a db.UserID.
 var UserKey UserKeyType
 
+// SecretKey is the user metadata field used to store the
+// user secret in the database.
+const SecretKey = "secret"
+
 // GenerateSecret generates a random string which is
 // cryptographically unpredictable.
 func GenerateSecret() (string, error) {

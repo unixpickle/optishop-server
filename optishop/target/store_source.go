@@ -26,11 +26,11 @@ func (s *storeDesc) Address() string {
 }
 
 type StoreSource struct {
-	client *Client
+	Client *Client
 }
 
 func (s *StoreSource) StoresNear(lat, lon float64) ([]optishop.StoreDesc, error) {
-	geocodes, err := s.client.Geocodes(lat, lon)
+	geocodes, err := s.Client.Geocodes(lat, lon)
 	if err != nil {
 		return nil, errors.Wrap(err, "stores near")
 	}
@@ -41,7 +41,7 @@ func (s *StoreSource) StoresNear(lat, lon float64) ([]optishop.StoreDesc, error)
 }
 
 func (s *StoreSource) QueryStores(query string) ([]optishop.StoreDesc, error) {
-	locations, err := s.client.SearchStores(query)
+	locations, err := s.Client.SearchStores(query)
 	if err != nil {
 		return nil, err
 	}
