@@ -1,12 +1,13 @@
 package main
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"net/http"
 	"net/url"
 	"path/filepath"
-	"time"
 
 	"github.com/unixpickle/essentials"
 	"github.com/unixpickle/optishop-server/optishop/db"
@@ -26,6 +27,7 @@ func main() {
 	}
 	http.HandleFunc("/", server.HandleGeneral)
 	http.HandleFunc("/login", server.HandleLogin)
+	http.HandleFunc("/signup", server.HandleSignup)
 	http.HandleFunc("/api/stores", AuthHandler(server.DB, server.HandleStoresAPI))
 	http.ListenAndServe(args.Addr, nil)
 }
@@ -63,14 +65,33 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	http.SetCookie(w, &http.Cookie{
-		Name: "session",
-		Value: (url.Values{
-			"user":   []string{string(userID)},
-			"secret": []string{secret},
-		}).Encode(),
-		Expires: time.Now().Add(time.Hour * 24 * 30),
-	})
+	SetAuthCookie(w, userID, secret)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "POST" {
+		http.ServeFile(w, r, filepath.Join(s.AssetDir, "signup.html"))
+		return
+	}
+
+	data := make([]byte, 32)
+	if _, err := rand.Read(data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	secret := base64.StdEncoding.EncodeToString(data)
+	metadata := map[string]string{
+		"secret": secret,
+	}
+
+	userID, err := s.DB.CreateUser(r.FormValue("username"), r.FormValue("password"), metadata)
+	if err != nil {
+		http.Redirect(w, r, "/signup?error="+url.QueryEscape(err.Error()), http.StatusSeeOther)
+		return
+	}
+
+	SetAuthCookie(w, userID, secret)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 

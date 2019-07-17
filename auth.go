@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/unixpickle/optishop-server/optishop/db"
 )
@@ -14,6 +15,18 @@ type UserKeyType int
 
 // UserKey is the context key used to store a db.UserID.
 var UserKey UserKeyType
+
+// SetAuthCookie sets a user cookie for a request.
+func SetAuthCookie(w http.ResponseWriter, user db.UserID, secret string) {
+	http.SetCookie(w, &http.Cookie{
+		Name: "session",
+		Value: (url.Values{
+			"user":   []string{string(user)},
+			"secret": []string{secret},
+		}).Encode(),
+		Expires: time.Now().Add(time.Hour * 24 * 30),
+	})
+}
 
 // AuthHandler wraps an HTTP handler to ensure that the
 // handler is only called for authenticated requests.
