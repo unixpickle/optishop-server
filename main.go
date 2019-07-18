@@ -62,7 +62,7 @@ func (s *Server) HandleGeneral(w http.ResponseWriter, r *http.Request) {
 		// homepage requests always get redirected to the
 		// login page.
 		AuthHandler(s.DB, func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, filepath.Join(s.AssetDir, "index.html"))
+			http.ServeFile(w, r, filepath.Join(s.AssetDir, "stores.html"))
 		})(w, r)
 	} else {
 		http.FileServer(http.Dir(s.AssetDir)).ServeHTTP(w, r)
