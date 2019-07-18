@@ -2,10 +2,28 @@
 <html>
     <head>
         <title>Optishop</title>
-        <script type="text/javascript" src="script.js"></script>
         <link rel="stylesheet" type="text/css" href="style.css">
     </head>
     <body>
-        Login here.
+        <span id="account-error"></span>
+
+        <form id="account-form" method="POST">
+            <input name="username" placeholder="Username" class="field">
+            <input name="password" type="password" placeholder="Password" class="field">
+            <input type="submit" value="Login" class="submit-button">
+            <span class="fine-print">
+                Don't have an account?
+                <a href="signup">Click here to create an account.</a>
+            </span>
+        </form>
+
+        <script type="text/javascript">
+        const params = new URLSearchParams(location.search);
+        if (params.get('error')) {
+            const errBox = document.getElementById('account-error');
+            errBox.textContent = params.get('error');
+            errBox.style.display = 'block';
+        }
+        </script>
     </body>
 </html>

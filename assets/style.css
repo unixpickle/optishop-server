@@ -1,3 +1,96 @@
+body {
+    background-color: #f0f0f0;
+    font-family: sans-serif;
+}
+
 .page {
     display: none;
+}
+
+#account-form {
+    display: block;
+    position: absolute;
+    left: calc(50% - 150px);
+    top: calc(50% - 150px);
+    width: 300px;
+    height: 300px;
+    padding: 8px 16px;
+    box-sizing: border-box;
+    background-color: white;
+}
+
+#account-form input {
+    margin: 8px 0;
+    height: 40px;
+}
+
+#account-form .field {
+    width: 100%;
+    line-height: 40px;
+    font-size: 20px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    border: 1px solid #d5d5d5;
+}
+
+#account-form .submit-button {
+    width: 100%;
+    cursor: pointer;
+    border: none;
+    font-size: 20px;
+    color: white;
+    background-color: #65bcd4;
+}
+
+#account-form .submit-button:hover {
+    background-color: #459cb4;
+}
+
+#account-form input:focus {
+    outline: none;
+}
+
+#account-form .fine-print {
+    display: block;
+    text-align: center;
+    font-size: 15px;
+    margin-top: 10px;
+}
+
+#account-form a {
+    color: #65bcd4;
+    text-decoration: none;
+}
+
+#account-form a:hover {
+    color: #459cb4;
+}
+
+#account-error {
+    display: none;
+    position: absolute;
+    bottom: calc(50% + 166px);
+    left: calc(50% - 150px);
+    width: 300px;
+    padding: 16px;
+    box-sizing: border-box;
+    color: #500;
+    background-color: #fcbebd;
+    text-align: center;
+}
+
+@media screen and (max-height: 450px) {
+    #account-error {
+        position: relative;
+        left: 0;
+        bottom: 0;
+        margin: 16px auto;
+    }
+
+    #account-form {
+        position: relative;
+        left: 0;
+        bottom: 0;
+        margin: 16px auto;
+    }
 }
