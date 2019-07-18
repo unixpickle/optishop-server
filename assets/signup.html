@@ -5,6 +5,19 @@
         <link rel="stylesheet" type="text/css" href="style.css">
     </head>
     <body>
-        Signup here.
+        <span id="account-error"></span>
+
+        <form id="account-form" method="POST">
+            <input name="username" placeholder="Username" class="field">
+            <input name="password" type="password" placeholder="Password" class="field">
+            <input name="confirm" type="password" placeholder="Confirm password" class="field">
+            <input type="submit" value="Signup" class="submit-button">
+            <span class="fine-print">
+                Already have an account?
+                <a href="login">Login here.</a>
+            </span>
+        </form>
+
+        <script src="js/account_error.js"></script>
     </body>
 </html>

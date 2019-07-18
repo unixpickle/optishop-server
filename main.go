@@ -94,6 +94,12 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if r.FormValue("password") != r.FormValue("confirm") {
+		http.Redirect(w, r, "/signup?error="+url.QueryEscape("passwords do not match"),
+			http.StatusSeeOther)
+		return
+	}
+
 	secret, err := GenerateSecret()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
