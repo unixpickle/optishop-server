@@ -157,10 +157,12 @@ func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
 		serveError(w, r, err)
 		return
 	}
+	floor := store.Layout().ZoneFloor(zone)
 
 	_, err = s.DB.AddListEntry(user, storeID, &db.ListEntryInfo{
 		InventoryProductData: data,
 		Zone:                 zone,
+		Floor:                floor,
 	})
 	if err != nil {
 		serveError(w, r, err)

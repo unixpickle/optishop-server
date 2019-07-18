@@ -29,6 +29,7 @@ type ListEntry struct {
 type ListEntryInfo struct {
 	InventoryProductData []byte
 	Zone                 *optishop.Zone
+	Floor                int
 }
 
 type DB interface {
