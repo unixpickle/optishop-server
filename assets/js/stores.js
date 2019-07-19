@@ -1,26 +1,17 @@
 (function () {
 
-    const ENTER_KEY = 13;
-    const ESCAPE_KEY = 27;
-
     class StoresPage {
         constructor() {
             this.addButton = document.getElementById('add-button');
             this.storesList = document.getElementById('stores-list');
             this.noStores = document.getElementById('no-stores');
-            this.addDialog = new AddDialog();
+            this.addStoreDialog = new AddStoreDialog();
 
-            this.addButton.addEventListener('click', () => this.addDialog.open());
-            this.addDialog.onAdd = (store) => this.addStore(store);
+            this.addButton.addEventListener('click', () => this.addStoreDialog.open());
+            this.addStoreDialog.onAdd = (store) => this.addStore(store);
 
             this.data = null;
             this.updateData(window.STORES_DATA);
-
-            window.addEventListener('keyup', (e) => {
-                if (e.which === ESCAPE_KEY) {
-                    this.addDialog.close();
-                }
-            });
         }
 
         updateData(data) {
@@ -89,66 +80,20 @@
         }
     }
 
-    class AddDialog {
-        constructor() {
-            this.element = document.getElementById('add-dialog');
-            this.searchBox = document.getElementById('search-box');
-            this.searchButton = document.getElementById('search-button');
-            this.searchResults = document.getElementById('search-results');
-            this.closeAddButton = document.getElementById('close-add-button');
-
-            // Used to prevent old requests from affecting the
-            // add dialog if it is closed and re-opened.
-            this.instanceNum = 0;
-
-            this.closeAddButton.addEventListener('click', () => this.close());
-            this.searchButton.addEventListener('click', () => this.search());
-            this.searchBox.addEventListener('keyup', (e) => {
-                if (e.which === ENTER_KEY) {
-                    this.search();
-                }
-            })
-
-            this.onAdd = () => null;
-        }
-
-        open() {
-            this.instanceNum++;
-            this.searchBox.value = '';
-            this.searchResults.innerHTML = '';
-            this.element.style.display = 'block';
-        }
-
-        close() {
-            this.instanceNum++;
-            this.element.style.display = 'none';
-        }
-
-        search() {
-            this.instanceNum++;
-            const query = this.searchBox.value;
-            const instanceNum = this.instanceNum;
-
-            this.searchResults.innerHTML = '';
+    class AddStoreDialog extends AddDialog {
+        fetchSearchResults(query) {
             fetch('/api/storequery?query=' + encodeURIComponent(query), {
                 credentials: 'same-origin',
             }).then((x) => x.json()).then((result) => {
-                if (instanceNum !== this.instanceNum) {
-                    return;
-                }
                 if (result.error) {
-                    handleError(result.error);
-                    return;
+                    throw result.error;
                 }
-                result.forEach((store) => {
-                    const elem = createListItem(store);
-                    elem.addEventListener('click', () => {
-                        this.close();
-                        this.onAdd(store);
-                    });
-                    this.searchResults.appendChild(elem);
-                });
+                return result;
             }).catch((err) => handleError(err));
+        }
+
+        createListItem(item) {
+            return createListItem(item);
         }
     }
 
@@ -172,10 +117,6 @@
         elem.appendChild(address);
 
         return elem;
-    }
-
-    function handleError(err) {
-        alert('Error: ' + err);
     }
 
     window.addEventListener('load', () => {
