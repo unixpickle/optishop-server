@@ -54,7 +54,7 @@ type SearchItem struct {
 	Images                []*ProductImage `json:"images"`
 	AvailabilityStatus    string          `json:"availability_status"`
 	SDSAvailabilityStatus string          `json:"scheduled_delivery_store_availability_status"`
-	Price                 *ProductPrice   `json:"price"`
+	Price                 ProductPrice    `json:"price"`
 }
 
 // SearchResults stores results from a product search.
