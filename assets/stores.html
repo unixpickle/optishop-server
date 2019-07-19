@@ -10,9 +10,9 @@
     </head>
     <body>
         <div class="modify-buttons">
-            <button class="add-button" id="add-store">Add Store</button>
+            <button class="add-button" id="add-button">Add Store</button>
         </div>
-        <ol class="item-list">
+        <ol class="item-list" id="stores-list" style="display: none">
             <li class="list-store">
                 <img class="logo" src="svg/logo/target.svg">
                 <label class="name">Target: Augusta</label>
@@ -24,16 +24,16 @@
                 <label class="address">55 Greenwich St, New York, NY 10007</label>
             </li>
         </ol>
-        <div class="empty-list">
+        <div class="empty-list" id="no-stores" style="display: none">
             You have no stores setup.
             Hit "Add Store" to get started.
         </div>
-        <div class="add-dialog">
-            <button class="close-button">Close Store Search</button>
+        <div class="add-dialog" id="add-dialog" style="display: none">
+            <button class="close-button" id="close-add-button">Close Store Search</button>
             <div class="dialog-content">
-                <input placeholder="Enter city, zip code, etc." class="search-box">
-                <button class="search-button">Search</button>
-                <ol class="search-results">
+                <input placeholder="Enter city, zip code, etc." class="search-box" id="search-box">
+                <button class="search-button" id="search-button">Search</button>
+                <ol class="search-results" id="search-results">
                     <li class="list-store">
                         <img class="logo" src="svg/logo/target.svg">
                         <label class="name">Target: Augusta</label>
