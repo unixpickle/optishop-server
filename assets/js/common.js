@@ -80,7 +80,7 @@ class AddDialog {
         this.closeAddButton.addEventListener('click', () => this.close());
         window.addEventListener('keyup', (e) => {
             if (e.which === ESCAPE_KEY) {
-                this.addDialog.close();
+                this.close();
             }
         });
 
