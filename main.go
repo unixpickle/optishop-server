@@ -48,6 +48,8 @@ func main() {
 	http.HandleFunc("/api/removeitem", AuthHandler(server.DB,
 		StoreHandler(server.DB, server.StoreCache, server.HandleRemoveItemAPI)))
 	http.HandleFunc("/api/removestore", AuthHandler(server.DB, server.HandleRemoveStoreAPI))
+	http.HandleFunc("/api/sort", AuthHandler(server.DB,
+		StoreHandler(server.DB, server.StoreCache, server.HandleSortAPI)))
 	http.HandleFunc("/api/storequery", AuthHandler(server.DB, server.HandleStoreQueryAPI))
 	http.HandleFunc("/api/stores", AuthHandler(server.DB, server.HandleStoresAPI))
 	http.ListenAndServe(args.Addr, nil)
@@ -377,6 +379,45 @@ func (s *Server) HandleRemoveStoreAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.HandleStoresAPI(w, r)
+}
+
+func (s *Server) HandleSortAPI(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(UserKey).(db.UserID)
+	storeID := r.Context().Value(StoreIDKey).(db.StoreID)
+	store := r.Context().Value(StoreKey).(optishop.Store)
+
+	list, err := s.DB.ListEntries(user, storeID)
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+
+	entries, err := SortEntries(list, store)
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+
+	// Remove and re-insert the entries.
+	// There is a chance for a race condition here, but it
+	// is rare, and it's unlikely to happen in practice
+	// since the user won't be using multiple devices at
+	// once.
+	for _, entry := range entries {
+		// Ignore error since there might be a race condition
+		// where the item was already removed, and we still
+		// want to re-insert the other entries to not lose
+		// everything.
+		s.DB.RemoveListEntry(user, storeID, entry.ID)
+	}
+	for _, entry := range entries {
+		if _, err := s.DB.AddListEntry(user, storeID, entry.Info); err != nil {
+			serveError(w, r, err)
+			return
+		}
+	}
+
+	s.HandleListAPI(w, r)
 }
 
 func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {

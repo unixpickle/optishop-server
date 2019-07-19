@@ -101,7 +101,7 @@ button, input[type="submit"] {
 
 .modify-buttons {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 
 .modify-buttons button {
@@ -114,6 +114,7 @@ button, input[type="submit"] {
     color: #555;
     font-size: 17px;
     line-height: 34px;
+    margin: 10px 5px 0 5px;
 
     background-position-x: 10px;
     background-position-y: 7px;
@@ -130,6 +131,10 @@ button, input[type="submit"] {
 
 .modify-buttons .add-button {
     background-image: url('svg/add.svg');
+}
+
+.modify-buttons .sort-button {
+    background-image: url('svg/sort.svg');
 }
 
 .empty-list, .item-list {

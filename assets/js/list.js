@@ -3,7 +3,22 @@
     class ListPage extends ListingPage {
         constructor() {
             super();
+            this.sortButton = document.getElementById('sort-button');
+            this.sortButton.addEventListener('click', () => {
+                this.sort().catch((err) => handleError(err));
+            });
             this.updateData(window.LIST_DATA);
+        }
+
+        async sort() {
+            const response = await fetch('/api/sort?store=' + encodeURIComponent(currentStore()), {
+                credentials: 'same-origin',
+            });
+            const data = await response.json();
+            if (data.error) {
+                throw data.error;
+            }
+            this.updateData(data);
         }
 
         createAddDialog() {
@@ -22,7 +37,6 @@
             const formData = 'store=' + encodeURIComponent(currentStore()) +
                 '&signature=' + encodeURIComponent(item.signature) +
                 '&data=' + encodeURIComponent(JSON.stringify(item.data));
-            console.log('sending add request');
             const response = await fetch('/api/additem', {
                 method: 'POST',
                 credentials: 'same-origin',
