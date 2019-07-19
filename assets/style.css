@@ -182,40 +182,40 @@ button {
     cursor: pointer;
 }
 
-.list-store::after {
+.list-item::after {
     content: ' ';
     display: block;
     clear: both;
 }
 
-.list-store .logo {
+.list-item .image {
     float: left;
     height: 80px;
     width: 80px;
 }
 
-.list-store label {
+.list-item label {
     display: block;
     position: absolute;
     left: 95px;
     width: calc(100% - 95px);
 }
 
-.list-store .name {
+.list-item .name {
     top: 15px;
     font-weight: bolder;
 }
 
-.list-store .address {
+.list-item .location {
     bottom: 15px;
     font-style: oblique;
 }
 
-.item-list .list-store label {
+.item-list .list-item label {
     width: calc(100% - 135px);
 }
 
-.item-list .list-store .delete-button {
+.item-list .list-item .delete-button {
     position: absolute;
     right: 0px;
     top: 0px;
@@ -231,7 +231,7 @@ button {
     color: transparent;
 }
 
-.item-list .list-store .delete-button:hover {
+.item-list .list-item .delete-button:hover {
     background-color: #f0f0f0;
 }
 
@@ -319,7 +319,7 @@ button {
     padding: 0;
 }
 
-.add-dialog .search-results .list-store {
+.add-dialog .search-results .list-item {
     box-sizing: border-box;
     padding: 5px;
     position: relative;
@@ -327,10 +327,10 @@ button {
     cursor: pointer;
 }
 
-.add-dialog .search-results .list-store * {
+.add-dialog .search-results .list-item * {
     cursor: pointer;
 }
 
-.add-dialog .search-results .list-store:hover {
+.add-dialog .search-results .list-item:hover {
     background-color: #f0f0f0;
 }

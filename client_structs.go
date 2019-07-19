@@ -3,6 +3,11 @@ package main
 import "github.com/unixpickle/optishop-server/optishop"
 
 type ClientListItem struct {
+	// Fields present only for items the user has added to
+	// their list.
+	ID       string `json:"id,omitempty"`
+	ZoneName string `json:"zone,omitempty"`
+
 	Name        string `json:"name"`
 	PhotoURL    string `json:"photoUrl"`
 	Description string `json:"description"`

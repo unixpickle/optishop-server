@@ -347,7 +347,12 @@ func (s *Server) getClientListItems(r *http.Request) ([]*ClientListItem, error) 
 		if err != nil {
 			return nil, err
 		}
-		results = append(results, NewClientListItem(invProd))
+		item := NewClientListItem(invProd)
+		item.ID = string(entry.ID)
+		if entry.Info.Zone != nil {
+			item.ZoneName = entry.Info.Zone.Name
+		}
+		results = append(results, item)
 	}
 
 	return results, nil

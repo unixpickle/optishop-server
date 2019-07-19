@@ -18,48 +18,48 @@
             window.open('/list?store=' + encodeURIComponent(store.id));
         }
 
-        addItem(store) {
+        async addItem(store) {
             const formData = 'source=' + encodeURIComponent(store.source) +
                 '&signature=' + encodeURIComponent(store.signature) +
                 '&data=' + encodeURIComponent(JSON.stringify(store.data));
-            return fetch('/api/addstore', {
+            const response = await fetch('/api/addstore', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: {
                     'content-type': 'application/x-www-form-urlencoded',
                 },
                 body: formData,
-            }).then((x) => x.json()).then((data) => {
-                if (data.error) {
-                    throw data.error;
-                }
-                store.id = data;
-                this.addListItem(store);
             });
+            const data = await response.json();
+            if (data.error) {
+                throw data.error;
+            }
+            store.id = data;
+            this.addListItem(store);
         }
 
-        deleteItem(store) {
-            return fetch('/api/removestore?store=' + encodeURIComponent(store.id), {
+        async deleteItem(store) {
+            const response = await fetch('/api/removestore?store=' + encodeURIComponent(store.id), {
                 credentials: 'same-origin',
-            }).then((x) => x.json()).then((data) => {
-                if (data.error) {
-                    throw data.error;
-                }
-                this.updateData(data);
             });
+            const data = await response.json();
+            if (data.error) {
+                throw data.error;
+            }
+            this.updateData(data);
         }
     }
 
     class AddStoreDialog extends AddDialog {
-        fetchSearchResults(query) {
-            return fetch('/api/storequery?query=' + encodeURIComponent(query), {
+        async fetchSearchResults(query) {
+            const response = await fetch('/api/storequery?query=' + encodeURIComponent(query), {
                 credentials: 'same-origin',
-            }).then((x) => x.json()).then((result) => {
-                if (result.error) {
-                    throw result.error;
-                }
-                return result;
-            }).catch((err) => handleError(err));
+            });
+            const result = await response.json();
+            if (result.error) {
+                throw result.error;
+            }
+            return result;
         }
 
         createListItem(item) {
@@ -69,10 +69,10 @@
 
     function createListItem(store) {
         const elem = document.createElement('li');
-        elem.className = 'list-store';
+        elem.className = 'list-item';
 
         const logo = document.createElement('img');
-        logo.className = 'logo';
+        logo.className = 'image';
         logo.src = 'svg/logo/' + store.source + '.svg';
         elem.appendChild(logo);
 
@@ -82,7 +82,7 @@
         elem.appendChild(name);
 
         const address = document.createElement('label');
-        address.className = 'address';
+        address.className = 'location';
         address.textContent = store.address;
         elem.appendChild(address);
 
