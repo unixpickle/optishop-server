@@ -9,6 +9,16 @@ body {
     display: none;
 }
 
+button:focus, input:focus {
+    outline: 0;
+}
+
+button {
+    border: none;
+    margin: 0;
+    padding: 0;
+}
+
 #account-form {
     display: block;
     position: absolute;
@@ -39,7 +49,6 @@ body {
 #account-form .submit-button {
     width: 100%;
     cursor: pointer;
-    border: none;
     font-size: 20px;
     color: white;
     background-color: #65bcd4;
@@ -47,10 +56,6 @@ body {
 
 #account-form .submit-button:hover {
     background-color: #459cb4;
-}
-
-#account-form input:focus {
-    outline: 0;
 }
 
 #account-form .fine-print {
@@ -127,12 +132,8 @@ body {
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.6);
 }
 
-.modify-buttons button:focus {
-    outline: 0;
-}
-
 .modify-buttons .add-button {
-    background-image: url(svg/add.svg);
+    background-image: url('svg/add.svg');
 }
 
 .empty-list, .item-list {
@@ -184,19 +185,19 @@ body {
     cursor: pointer;
 }
 
-.item-list .list-store::after {
+.list-store::after {
     content: ' ';
     display: block;
     clear: both;
 }
 
-.item-list .list-store .logo {
+.list-store .logo {
     float: left;
     height: 80px;
     width: 80px;
 }
 
-.item-list .list-store .name {
+.list-store .name {
     display: block;
     position: absolute;
     top: 15px;
@@ -205,11 +206,111 @@ body {
     font-weight: bolder;
 }
 
-.item-list .list-store .address {
+.list-store .address {
     display: block;
     position: absolute;
     bottom: 15px;
     left: 95px;
     width: calc(100% - 95px);
     font-style: oblique;
+}
+
+.add-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: white;
+}
+
+.add-dialog .close-button {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: 30px;
+    height: 30px;
+    background-image: url('svg/close.svg');
+    background-size: 30px 30px;
+    background-color: transparent;
+    font-size: 0;
+    color: transparent;
+    cursor: pointer;
+}
+
+.add-dialog .dialog-content {
+    position: absolute;
+    width: 600px;
+    top: 10px;
+    left: calc(50% - 300px);
+    height: calc(100% - 20px);
+}
+
+@media screen and (max-width: 720px) {
+    .add-dialog .dialog-content {
+        width: calc(100% - 20px);
+        top: 60px;
+        left: 10px;
+    }
+}
+
+
+.add-dialog .search-box {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: calc(100% - 100px);
+    height: 40px;
+    line-height: 40px;
+    font-size: 20px;
+    padding: 0 8px;
+    box-sizing: border-box;
+    border: 1px solid #d5d5d5;
+}
+
+.add-dialog .search-button {
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 90px;
+    height: 40px;
+    cursor: pointer;
+    font-size: 20px;
+    color: white;
+    background-color: #65bcd4;
+}
+
+.add-dialog .search-button:hover {
+    background-color: #459cb4;
+}
+
+.add-dialog .search-results {
+    position: absolute;
+    left: 0;
+    top: 50px;
+    width: 100%;
+    height: calc(100% - 50px);
+    box-sizing: border-box;
+    border: 1px solid #d5d5d5;
+    overflow-y: scroll;
+
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+.add-dialog .search-results .list-store {
+    box-sizing: border-box;
+    padding: 5px;
+    position: relative;
+    border-bottom: 1px solid #d5d5d5;
+    cursor: pointer;
+}
+
+.add-dialog .search-results .list-store * {
+    cursor: pointer;
+}
+
+.add-dialog .search-results .list-store:hover {
+    background-color: #f0f0f0;
 }
