@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Optishop</title>
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <script type="text/javascript">
+        window.LIST_DATA = INSERT_DATA_HERE;
+        </script>
+        <script src="js/list.js"></script>
+    </head>
+    <body>
+        <div class="modify-buttons">
+            <button class="add-button" id="add-button">Add Item</button>
+        </div>
+        <ol class="item-list" id="item-list" style="display: none"></ol>
+        <div class="empty-list" id="no-items" style="display: none">
+            You have no items on your list.
+            Hit "Add Item" to get started.
+        </div>
+        <div class="add-dialog" id="add-dialog" style="display: none">
+            <button class="close-button" id="close-add-button">Close Product Search</button>
+            <div class="dialog-content">
+                <input placeholder="Enter product name, description, etc."
+                       class="search-box" id="search-box">
+                <button class="search-button" id="search-button">Search</button>
+                <ol class="search-results" id="search-results"></ol>
+            </div>
+        </div>
+    </body>
+</html>

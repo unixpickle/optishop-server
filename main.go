@@ -33,6 +33,8 @@ func main() {
 		StoreCache: NewStoreCache(sources),
 	}
 	http.HandleFunc("/", server.HandleGeneral)
+	http.HandleFunc("/list", AuthHandler(server.DB,
+		StoreHandler(server.DB, server.StoreCache, server.HandleList)))
 	http.HandleFunc("/login", server.HandleLogin)
 	http.HandleFunc("/signup", server.HandleSignup)
 	http.HandleFunc("/api/additem", AuthHandler(server.DB,
@@ -66,6 +68,29 @@ func (s *Server) HandleGeneral(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.FileServer(http.Dir(s.AssetDir)).ServeHTTP(w, r)
 	}
+}
+
+func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
+	pageData, err := ioutil.ReadFile(filepath.Join(s.AssetDir, "list.html"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	list, err := s.getClientListItems(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	listData, err := json.Marshal(list)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	page := bytes.Replace(pageData, []byte("INSERT_DATA_HERE"), listData, 1)
+	w.Write(page)
 }
 
 func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
@@ -131,7 +156,7 @@ func (s *Server) HandleStores(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	clientStores, err := s.userClientStores(r)
+	clientStores, err := s.getClientStores(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -298,27 +323,34 @@ func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) HandleListAPI(w http.ResponseWriter, r *http.Request) {
+	items, err := s.getClientListItems(r)
+	if err != nil {
+		serveError(w, r, err)
+		return
+	}
+	serveObject(w, r, items)
+}
+
+func (s *Server) getClientListItems(r *http.Request) ([]*ClientListItem, error) {
 	user := r.Context().Value(UserKey).(db.UserID)
 	storeID := r.Context().Value(StoreIDKey).(db.StoreID)
 	store := r.Context().Value(StoreKey).(optishop.Store)
 
 	listEntries, err := s.DB.ListEntries(user, storeID)
 	if err != nil {
-		serveError(w, r, err)
-		return
+		return nil, err
 	}
 
 	results := []*ClientListItem{}
 	for _, entry := range listEntries {
 		invProd, err := store.UnmarshalProduct(entry.Info.InventoryProductData)
 		if err != nil {
-			serveError(w, r, err)
-			return
+			return nil, err
 		}
 		results = append(results, NewClientListItem(invProd))
 	}
 
-	serveObject(w, r, results)
+	return results, nil
 }
 
 func (s *Server) HandleRemoveItemAPI(w http.ResponseWriter, r *http.Request) {
@@ -380,7 +412,7 @@ func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) HandleStoresAPI(w http.ResponseWriter, r *http.Request) {
-	clientStores, err := s.userClientStores(r)
+	clientStores, err := s.getClientStores(r)
 	if err != nil {
 		serveError(w, r, err)
 		return
@@ -388,7 +420,7 @@ func (s *Server) HandleStoresAPI(w http.ResponseWriter, r *http.Request) {
 	serveObject(w, r, clientStores)
 }
 
-func (s *Server) userClientStores(r *http.Request) ([]*ClientStoreDesc, error) {
+func (s *Server) getClientStores(r *http.Request) ([]*ClientStoreDesc, error) {
 	user := r.Context().Value(UserKey).(db.UserID)
 
 	stores, err := s.DB.Stores(user)
