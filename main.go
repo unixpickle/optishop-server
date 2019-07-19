@@ -125,28 +125,16 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) HandleStores(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value(UserKey).(db.UserID)
-
 	pageData, err := ioutil.ReadFile(filepath.Join(s.AssetDir, "stores.html"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	stores, err := s.DB.Stores(user)
+	clientStores, err := s.userClientStores(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	clientStores := []*ClientStoreDesc{}
-	for _, record := range stores {
-		clientStores = append(clientStores, &ClientStoreDesc{
-			ID:      string(record.ID),
-			Source:  record.Info.SourceName,
-			Name:    record.Info.StoreName,
-			Address: record.Info.StoreAddress,
-		})
 	}
 
 	storeData, err := json.Marshal(clientStores)
@@ -392,11 +380,20 @@ func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) HandleStoresAPI(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value(UserKey).(db.UserID)
-	stores, err := s.DB.Stores(user)
+	clientStores, err := s.userClientStores(r)
 	if err != nil {
 		serveError(w, r, err)
 		return
+	}
+	serveObject(w, r, clientStores)
+}
+
+func (s *Server) userClientStores(r *http.Request) ([]*ClientStoreDesc, error) {
+	user := r.Context().Value(UserKey).(db.UserID)
+
+	stores, err := s.DB.Stores(user)
+	if err != nil {
+		return nil, err
 	}
 
 	clientStores := []*ClientStoreDesc{}
@@ -409,7 +406,7 @@ func (s *Server) HandleStoresAPI(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	serveObject(w, r, clientStores)
+	return clientStores, nil
 }
 
 func serveError(w http.ResponseWriter, r *http.Request, err error) {
