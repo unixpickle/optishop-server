@@ -35,7 +35,7 @@ type LocationInfo struct {
 	LocationNames   []struct {
 		NameType string `json:"name_type"`
 		Name     string `json:"name"`
-	}
+	} `json:"location_names"`
 	Address struct {
 		AddressLine1 string `json:"address_line1"`
 		City         string `json:"city"`
