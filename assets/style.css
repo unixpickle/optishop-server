@@ -194,22 +194,45 @@ button {
     width: 80px;
 }
 
-.list-store .name {
+.list-store label {
     display: block;
     position: absolute;
-    top: 15px;
     left: 95px;
     width: calc(100% - 95px);
+}
+
+.list-store .name {
+    top: 15px;
     font-weight: bolder;
 }
 
 .list-store .address {
-    display: block;
-    position: absolute;
     bottom: 15px;
-    left: 95px;
-    width: calc(100% - 95px);
     font-style: oblique;
+}
+
+.item-list .list-store label {
+    width: calc(100% - 135px);
+}
+
+.item-list .list-store .delete-button {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    width: 40px;
+    height: 100%;
+    background-image: url('svg/delete.svg');
+    background-color: transparent;
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+    background-position: center center;
+    cursor: pointer;
+    font-size: 0;
+    color: transparent;
+}
+
+.item-list .list-store .delete-button:hover {
+    background-color: #f0f0f0;
 }
 
 .add-dialog {

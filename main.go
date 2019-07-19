@@ -398,7 +398,18 @@ func (s *Server) HandleStoresAPI(w http.ResponseWriter, r *http.Request) {
 		serveError(w, r, err)
 		return
 	}
-	serveObject(w, r, stores)
+
+	clientStores := []*ClientStoreDesc{}
+	for _, record := range stores {
+		clientStores = append(clientStores, &ClientStoreDesc{
+			ID:      string(record.ID),
+			Source:  record.Info.SourceName,
+			Name:    record.Info.StoreName,
+			Address: record.Info.StoreAddress,
+		})
+	}
+
+	serveObject(w, r, clientStores)
 }
 
 func serveError(w http.ResponseWriter, r *http.Request, err error) {

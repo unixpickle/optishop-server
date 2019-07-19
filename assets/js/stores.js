@@ -1,5 +1,8 @@
 (function () {
 
+    const ENTER_KEY = 13;
+    const ESCAPE_KEY = 27;
+
     class StoresPage {
         constructor() {
             this.addButton = document.getElementById('add-button');
@@ -12,6 +15,12 @@
 
             this.data = null;
             this.updateData(window.STORES_DATA);
+
+            window.addEventListener('keyup', (e) => {
+                if (e.which === ESCAPE_KEY) {
+                    this.addDialog.close();
+                }
+            });
         }
 
         updateData(data) {
@@ -51,11 +60,31 @@
             }).catch((err) => handleError(err));
         }
 
+        deleteStore(id) {
+            fetch('/api/removestore?store=' + encodeURIComponent(id), {
+                credentials: 'same-origin',
+            }).then((x) => x.json()).then((data) => {
+                if (data.error) {
+                    handleError(data.error);
+                    return;
+                }
+                this.updateData(data);
+            }).catch((err) => handleError(err));
+        }
+
         addListItem(store) {
             const element = createListItem(store);
             element.addEventListener('click', () => {
                 window.open('/list?store=' + encodeURIComponent(store.id));
             });
+            const deleteButton = document.createElement('button');
+            deleteButton.className = 'delete-button';
+            deleteButton.textContent = 'Delete';
+            deleteButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteStore(store.id);
+            });
+            element.appendChild(deleteButton);
             this.storesList.appendChild(element);
         }
     }
@@ -74,6 +103,11 @@
 
             this.closeAddButton.addEventListener('click', () => this.close());
             this.searchButton.addEventListener('click', () => this.search());
+            this.searchBox.addEventListener('keyup', (e) => {
+                if (e.which === ENTER_KEY) {
+                    this.search();
+                }
+            })
 
             this.onAdd = () => null;
         }
