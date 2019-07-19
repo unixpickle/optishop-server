@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Optishop</title>
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <script type="text/javascript">
+        window.STORES_DATA = INSERT_DATA_HERE;
+        </script>
+        <script src="js/stores.js"></script>
+    </head>
+    <body>
+        <div class="modify-buttons">
+            <button class="add-button" id="add-store">Add Store</button>
+        </div>
+        <ol class="item-list">
+            <li class="list-store">
+                <img class="logo" src="svg/logo/target.svg">
+                <label class="name">Target: Augusta</label>
+                <label class="address">235 Robert C Daniel Jr Pkwy, Augusta, GA 30909</label>
+            </li>
+            <li class="list-store">
+                <img class="logo" src="svg/logo/target.svg">
+                <label class="name">Target: Tribeca</label>
+                <label class="address">55 Greenwich St, New York, NY 10007</label>
+            </li>
+        </ol>
+        <div class="empty-list">
+            You have no stores setup.
+            Hit "Add Store" to get started.
+        </div>
+        <div id="add-store-dialog"></div>
+    </body>
+</html>

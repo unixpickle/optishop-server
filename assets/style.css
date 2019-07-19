@@ -19,6 +19,7 @@ body {
     padding: 8px 16px;
     box-sizing: border-box;
     background-color: white;
+    box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.4);
 }
 
 #account-form input {
@@ -107,7 +108,7 @@ body {
     box-sizing: border-box;
     border-radius: 17px;
     border: none;
-    background-color: #d5d5d5;
+    background-color: white;
     cursor: pointer;
     color: #555;
     font-size: 17px;
@@ -118,10 +119,12 @@ body {
     background-size: 20px 20px;
     background-repeat: no-repeat;
     padding: 0 22px 0 42px;
+
+    box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.4);
 }
 
 .modify-buttons button:hover {
-    background-color: #c5c5c5;
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.6);
 }
 
 .modify-buttons button:focus {
@@ -138,11 +141,22 @@ body {
     left: calc(50% - 300px);
 }
 
+.item-list {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
 .empty-list {
+    display: none;
     text-align: center;
     box-sizing: border-box;
     padding: 20px 10px;
+}
+
+.item-list li, .empty-list {
     background-color: white;
+    box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.4);
 }
 
 @media screen and (max-width: 620px) {
@@ -151,4 +165,51 @@ body {
         position: relative;
         left: 10px;
     }
+}
+
+.item-list li {
+    width: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+    margin: 20px 0;
+    cursor: pointer;
+    position: relative;
+}
+
+.item-list li:hover {
+    box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.6);
+}
+
+.item-list li > * {
+    cursor: pointer;
+}
+
+.item-list .list-store::after {
+    content: ' ';
+    display: block;
+    clear: both;
+}
+
+.item-list .list-store .logo {
+    float: left;
+    height: 80px;
+    width: 80px;
+}
+
+.item-list .list-store .name {
+    display: block;
+    position: absolute;
+    top: 15px;
+    left: 95px;
+    width: calc(100% - 95px);
+    font-weight: bolder;
+}
+
+.item-list .list-store .address {
+    display: block;
+    position: absolute;
+    bottom: 15px;
+    left: 95px;
+    width: calc(100% - 95px);
+    font-style: oblique;
 }
