@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -58,12 +60,9 @@ type Server struct {
 
 func (s *Server) HandleGeneral(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" || r.URL.Path == "" {
-		// Kind of a hack to make sure unauthenticated
-		// homepage requests always get redirected to the
-		// login page.
-		AuthHandler(s.DB, func(w http.ResponseWriter, r *http.Request) {
-			http.ServeFile(w, r, filepath.Join(s.AssetDir, "stores.html"))
-		})(w, r)
+		// Hack for the stores page, since it always gets
+		// clumped in with the other asset requests.
+		AuthHandler(s.DB, s.HandleStores)(w, r)
 	} else {
 		http.FileServer(http.Dir(s.AssetDir)).ServeHTTP(w, r)
 	}
@@ -123,6 +122,41 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 
 	SetAuthCookie(w, userID, secret)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (s *Server) HandleStores(w http.ResponseWriter, r *http.Request) {
+	user := r.Context().Value(UserKey).(db.UserID)
+
+	pageData, err := ioutil.ReadFile(filepath.Join(s.AssetDir, "stores.html"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	stores, err := s.DB.Stores(user)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	clientStores := []*ClientStoreDesc{}
+	for _, record := range stores {
+		clientStores = append(clientStores, &ClientStoreDesc{
+			ID:      string(record.ID),
+			Source:  record.Info.SourceName,
+			Name:    record.Info.StoreName,
+			Address: record.Info.StoreAddress,
+		})
+	}
+
+	storeData, err := json.Marshal(clientStores)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	page := bytes.Replace(pageData, []byte("INSERT_DATA_HERE"), storeData, 1)
+	w.Write(page)
 }
 
 func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
@@ -208,9 +242,10 @@ func (s *Server) HandleAddStoreAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	storeID, err := s.DB.AddStore(user, &db.StoreInfo{
-		SourceName: sourceName,
-		StoreName:  store.Name(),
-		StoreData:  data,
+		SourceName:   sourceName,
+		StoreName:    store.Name(),
+		StoreAddress: store.Address(),
+		StoreData:    data,
 	})
 	if err != nil {
 		serveError(w, r, err)
@@ -257,7 +292,7 @@ func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var results []*ClientInventoryItem
+	results := []*ClientInventoryItem{}
 	for _, result := range rawResults {
 		data, err := store.MarshalProduct(result)
 		if err != nil {
@@ -285,7 +320,7 @@ func (s *Server) HandleListAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var results []*ClientListItem
+	results := []*ClientListItem{}
 	for _, entry := range listEntries {
 		invProd, err := store.UnmarshalProduct(entry.Info.InventoryProductData)
 		if err != nil {
@@ -329,7 +364,7 @@ func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {
 
 	query := r.FormValue("query")
 
-	var responses []*ClientStoreDesc
+	responses := []*ClientStoreDesc{}
 	for name, source := range s.Sources {
 		results, err := source.QueryStores(query)
 		if err != nil {

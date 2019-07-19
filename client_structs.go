@@ -28,10 +28,11 @@ type ClientInventoryItem struct {
 }
 
 type ClientStoreDesc struct {
+	ID      string `json:"id,omitempty"`
 	Source  string `json:"source"`
 	Name    string `json:"name"`
 	Address string `json:"address"`
-	Data    []byte `json:"data"`
+	Data    []byte `json:"data,omitempty"`
 
-	Signature string `json:"signature"`
+	Signature string `json:"signature,omitempty"`
 }

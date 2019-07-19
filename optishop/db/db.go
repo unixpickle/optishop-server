@@ -16,9 +16,10 @@ type StoreRecord struct {
 }
 
 type StoreInfo struct {
-	SourceName string
-	StoreName  string
-	StoreData  []byte
+	SourceName   string
+	StoreName    string
+	StoreAddress string
+	StoreData    []byte
 }
 
 type ListEntry struct {
