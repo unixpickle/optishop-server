@@ -10,6 +10,9 @@ import (
 
 // SortEntries finds the optimal route and returns the
 // list entries sorted by this route.
+//
+// The entries are copied and their zones are replaced
+// with actual pointers from store.Layout().
 func SortEntries(list []*db.ListEntry, store optishop.Store) ([]*db.ListEntry, error) {
 	layout := store.Layout()
 	newList := make([]*db.ListEntry, len(list))
@@ -44,8 +47,18 @@ func SortEntries(list []*db.ListEntry, store optishop.Store) ([]*db.ListEntry, e
 	floorConn := optishop.NewFloorConnectorCached(layout)
 	distFunc := floorConn.DistanceFunc(points)
 	solution := (optishop.FactorialTSPSolver{}).SolveTSP(len(points), distFunc)
-	// TODO: sort according to TSP.
-	return nil, errors.New("sort entries: not yet implemented")
+
+	var result []*db.ListEntry
+	for _, idx := range solution[1 : len(solution)-1] {
+		zone := zones[idx]
+		for _, x := range newList {
+			if x.Info.Zone == zone {
+				result = append(result, x)
+			}
+		}
+	}
+
+	return result, nil
 }
 
 // EntranceAndCheckout finds the entrance and checkout
