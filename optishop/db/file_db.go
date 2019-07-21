@@ -277,6 +277,41 @@ func (f *FileDB) RemoveListEntry(user UserID, store StoreID, entry ListEntryID) 
 	return errors.New("remove list entry: entry not found")
 }
 
+func (f *FileDB) PermuteListEntries(user UserID, store StoreID, ids []ListEntryID) error {
+	f.lock.Lock()
+	defer f.lock.Unlock()
+
+	var entries []*ListEntry
+	if err := f.decodeUserField(string(user), f.listField(store), &entries); err != nil {
+		return errors.Wrap(err, "permute list entries")
+	}
+
+	if len(ids) != len(entries) {
+		return errors.New("permute list entries: entries have changed")
+	}
+
+	mapping := map[ListEntryID]*ListEntry{}
+	for _, entry := range entries {
+		mapping[entry.ID] = entry
+	}
+
+	newEntries := make([]*ListEntry, len(ids))
+	for i, id := range ids {
+		if entry, ok := mapping[id]; !ok {
+			return errors.New("permute list entries: entry not found or duplicate ID")
+		} else {
+			newEntries[i] = entry
+			delete(mapping, id)
+		}
+	}
+
+	if err := f.encodeUserField(string(user), f.listField(store), newEntries); err != nil {
+		return errors.Wrap(err, "permute list entries")
+	}
+
+	return nil
+}
+
 func (f *FileDB) usernameDir(username string) string {
 	nameHash := sha256.Sum256([]byte(username))
 	nameStr := base64.URLEncoding.EncodeToString(nameHash[:])

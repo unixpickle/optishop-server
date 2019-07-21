@@ -46,4 +46,5 @@ type DB interface {
 	ListEntries(user UserID, store StoreID) ([]*ListEntry, error)
 	AddListEntry(user UserID, store StoreID, info *ListEntryInfo) (ListEntryID, error)
 	RemoveListEntry(user UserID, store StoreID, entry ListEntryID) error
+	PermuteListEntries(user UserID, store StoreID, ids []ListEntryID) error
 }
