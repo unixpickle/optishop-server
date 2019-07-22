@@ -258,6 +258,10 @@ func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
 		serveError(w, r, err)
 		return
 	}
+	if zone == nil {
+		serveError(w, r, errors.New("could not locate product within store"))
+		return
+	}
 	floor := store.Layout().ZoneFloor(zone)
 
 	_, err = s.DB.AddListEntry(user, storeID, &db.ListEntryInfo{
