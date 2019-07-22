@@ -16,6 +16,9 @@ class ListingPage {
 
     updateData(items) {
         if (items.length === 0) {
+            // Empty the list so that if we add a new item
+            // with addListItem, old items are not there.
+            this.itemList.innerHTML = '';
             this.itemList.style.display = 'none';
             this.emptyList.style.display = 'block';
             return;
