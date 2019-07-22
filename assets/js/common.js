@@ -42,6 +42,10 @@ class ListingPage {
         });
         element.appendChild(deleteButton);
         this.itemList.appendChild(element);
+
+        // Incase the list used to be empty.
+        this.itemList.style.display = 'block';
+        this.emptyList.style.display = 'none';
     }
 
     createAddDialog() {
