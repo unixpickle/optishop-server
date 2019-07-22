@@ -100,6 +100,7 @@ class AddDialog {
         this.searchBox.value = '';
         this.searchResults.innerHTML = '';
         this.element.style.display = 'block';
+        this.searchBox.focus();
     }
 
     close() {
