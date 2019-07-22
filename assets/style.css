@@ -137,6 +137,10 @@ button, input[type="submit"] {
     background-image: url('svg/sort.svg');
 }
 
+.modify-buttons .route-button {
+    background-image: url('svg/route.svg');
+}
+
 .empty-list, .item-list {
     width: 600px;
     position: absolute;

@@ -13,7 +13,8 @@ import (
 //
 // The entries are copied and their zones are replaced
 // with actual pointers from store.Layout().
-func SortEntries(list []*db.ListEntry, store optishop.Store) ([]*db.ListEntry, error) {
+func SortEntries(list []*db.ListEntry, store optishop.Store,
+	conn *optishop.FloorConnector) ([]*db.ListEntry, error) {
 	layout := store.Layout()
 	newList := make([]*db.ListEntry, len(list))
 	for i, entry := range list {
@@ -30,7 +31,7 @@ func SortEntries(list []*db.ListEntry, store optishop.Store) ([]*db.ListEntry, e
 
 	entrance, checkout := EntranceAndCheckout(layout)
 	if entrance == nil || checkout == nil {
-		return nil, errors.New("sort entries: unable to locate entrance or exit")
+		return nil, errors.New("sort entries: unable to locate entrance or checkout")
 	}
 
 	zones := make([]*optishop.Zone, 0, len(list)+2)
@@ -43,9 +44,8 @@ func SortEntries(list []*db.ListEntry, store optishop.Store) ([]*db.ListEntry, e
 		}
 	}
 	zones = append(zones, checkout)
-	points := zonesToPoints(layout, zones)
-	floorConn := optishop.NewFloorConnectorCached(layout)
-	distFunc := floorConn.DistanceFunc(points)
+	points := ZonesToPoints(layout, zones)
+	distFunc := conn.DistanceFunc(points)
 	solution := (optishop.FactorialTSPSolver{}).SolveTSP(len(points), distFunc)
 
 	var result []*db.ListEntry
@@ -59,6 +59,39 @@ func SortEntries(list []*db.ListEntry, store optishop.Store) ([]*db.ListEntry, e
 	}
 
 	return result, nil
+}
+
+// RoutePaths finds the optimal route and returns all of
+// the path segments of it.
+func RoutePaths(list []*db.ListEntry, store optishop.Store,
+	conn *optishop.FloorConnector) ([]optishop.FloorPath, error) {
+	entrance, checkout := EntranceAndCheckout(store.Layout())
+	if entrance == nil || checkout == nil {
+		return nil, errors.New("route paths: unable to locate entrance or checkout")
+	}
+
+	sorted, err := SortEntries(list, store, conn)
+	if err != nil {
+		return nil, errors.Wrap(err, "route paths")
+	}
+
+	zones := make([]*optishop.Zone, len(sorted)+2)
+	zones[0] = entrance
+	for i, e := range sorted {
+		zones[i+1] = e.Info.Zone
+	}
+	zones[len(sorted)+1] = checkout
+	points := ZonesToPoints(store.Layout(), zones)
+
+	var res []optishop.FloorPath
+	for i := 1; i < len(zones); i++ {
+		path := conn.Connect(points[i-1], points[i])
+		if path == nil {
+			return nil, errors.New("route paths: unable to connect two points")
+		}
+		res = append(res, path)
+	}
+	return res, nil
 }
 
 // EntranceAndCheckout finds the entrance and checkout
@@ -90,7 +123,9 @@ func findExactZone(l *optishop.Layout, floor int, zone *optishop.Zone) *optishop
 	return nil
 }
 
-func zonesToPoints(l *optishop.Layout, zones []*optishop.Zone) []optishop.FloorPoint {
+// ZonesToPoints converts a slice of zones to a slice of
+// floor-point pairs, suitable for passing to a connector.
+func ZonesToPoints(l *optishop.Layout, zones []*optishop.Zone) []optishop.FloorPoint {
 	points := make([]optishop.FloorPoint, len(zones))
 	for i, z := range zones {
 		if z == nil {

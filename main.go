@@ -4,10 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"regexp"
+
+	"github.com/ajstarks/svgo/float"
+	"github.com/unixpickle/optishop-server/optishop/visualize"
 
 	"github.com/pkg/errors"
 	"github.com/unixpickle/essentials"
@@ -36,6 +41,8 @@ func main() {
 	http.HandleFunc("/list", AuthHandler(server.DB,
 		StoreHandler(server.DB, server.StoreCache, server.HandleList)))
 	http.HandleFunc("/login", server.HandleLogin)
+	http.HandleFunc("/route", AuthHandler(server.DB,
+		StoreHandler(server.DB, server.StoreCache, server.HandleRoute)))
 	http.HandleFunc("/signup", server.HandleSignup)
 	http.HandleFunc("/api/additem", AuthHandler(server.DB,
 		StoreHandler(server.DB, server.StoreCache, server.HandleAddItemAPI)))
@@ -112,6 +119,51 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	SetAuthCookie(w, userID, secret)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
+	pageData, err := ioutil.ReadFile(filepath.Join(s.AssetDir, "route.html"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	userID := r.Context().Value(UserKey).(db.UserID)
+	storeID := r.Context().Value(StoreIDKey).(db.StoreID)
+	store := r.Context().Value(StoreKey).(optishop.Store)
+
+	entries, err := s.DB.ListEntries(userID, storeID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	paths, err := RoutePaths(entries, store, optishop.NewFloorConnectorCached(store.Layout()))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	var imageData bytes.Buffer
+	canvas := svg.New(&imageData)
+
+	width, height, _ := visualize.MultiFloorGeometry(store.Layout())
+	canvas.Start(width, height, fmt.Sprintf("viewBox=\"0 0 %f %f\"", width, height))
+
+	visualize.DrawFloors(canvas, store.Layout())
+	for _, path := range paths {
+		visualize.DrawFloorPath(canvas, store.Layout(), path)
+	}
+
+	canvas.End()
+
+	// Remove the width/height attributes so that the SVG
+	// has a dynamic size.
+	expr := regexp.MustCompile(`<svg width="[0-9\.]*" height="[0-9\.]*"`)
+	data := expr.ReplaceAll(imageData.Bytes(), []byte("<svg"))
+
+	page := bytes.Replace(pageData, []byte("INSERT_IMAGE_HERE"), data, 1)
+	w.Write(page)
 }
 
 func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
@@ -392,7 +444,7 @@ func (s *Server) HandleSortAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	entries, err := SortEntries(list, store)
+	entries, err := SortEntries(list, store, optishop.NewFloorConnectorCached(store.Layout()))
 	if err != nil {
 		serveError(w, r, err)
 		return

@@ -7,6 +7,10 @@
             this.sortButton.addEventListener('click', () => {
                 this.sort().catch((err) => handleError(err));
             });
+            this.routeButton = document.getElementById('route-button');
+            this.routeButton.addEventListener('click', () => {
+                window.open('/route?store=' + encodeURIComponent(currentStore()));
+            });
             this.updateData(window.LIST_DATA);
         }
 
