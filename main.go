@@ -398,23 +398,13 @@ func (s *Server) HandleSortAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Remove and re-insert the entries.
-	// There is a chance for a race condition here, but it
-	// is rare, and it's unlikely to happen in practice
-	// since the user won't be using multiple devices at
-	// once.
-	for _, entry := range entries {
-		// Ignore error since there might be a race condition
-		// where the item was already removed, and we still
-		// want to re-insert the other entries to not lose
-		// everything.
-		s.DB.RemoveListEntry(user, storeID, entry.ID)
+	newIDs := make([]db.ListEntryID, len(entries))
+	for i, entry := range entries {
+		newIDs[i] = entry.ID
 	}
-	for _, entry := range entries {
-		if _, err := s.DB.AddListEntry(user, storeID, entry.Info); err != nil {
-			serveError(w, r, err)
-			return
-		}
+	if err := s.DB.PermuteListEntries(user, storeID, newIDs); err != nil {
+		serveError(w, r, err)
+		return
 	}
 
 	s.HandleListAPI(w, r)
