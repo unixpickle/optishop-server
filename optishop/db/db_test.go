@@ -1,6 +1,10 @@
 package db
 
 import (
+	"bytes"
+	"fmt"
+	"math/rand"
+	"reflect"
 	"testing"
 
 	"github.com/unixpickle/optishop-server/optishop"
@@ -235,4 +239,85 @@ func runGenericTests(t *testing.T, db DB) {
 			t.Error("incorrect fields in first entry")
 		}
 	})
+
+	t.Run("Permute", func(t *testing.T) {
+		user, err := db.CreateUser("permuteTester", "pass", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		store, err := db.AddStore(user, &StoreInfo{
+			SourceName: "target",
+			StoreName:  "tribeca",
+			StoreData:  []byte("hello"),
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		ids := make([]ListEntryID, 10)
+		idToInfo := map[ListEntryID]*ListEntryInfo{}
+		for i := range ids {
+			item := &ListEntryInfo{
+				InventoryProductData: []byte(fmt.Sprintf("product %d", i)),
+				Zone: &optishop.Zone{
+					Name:     fmt.Sprintf("A%d", i),
+					Location: optishop.Point{X: float64(i), Y: float64(i)},
+				},
+				Floor: i,
+			}
+			id, err := db.AddListEntry(user, store, item)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ids[i] = id
+			idToInfo[id] = item
+		}
+
+		checkContents := func() {
+			entries, err := db.ListEntries(user, store)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(entries) != 10 {
+				t.Fatalf("invalid count: %d", len(entries))
+			}
+			for i, entry := range entries {
+				if entry.ID != ids[i] || !listEntriesEqual(entry.Info, idToInfo[entry.ID]) {
+					t.Fatal("invalid entry or ID")
+				}
+			}
+		}
+
+		checkContents()
+		for i := 0; i < 10; i++ {
+			rand.Shuffle(len(ids), func(i, j int) {
+				ids[i], ids[j] = ids[j], ids[i]
+			})
+			if err := db.PermuteListEntries(user, store, ids); err != nil {
+				t.Fatal(err)
+			}
+			checkContents()
+		}
+
+		errorPerms := [][]ListEntryID{
+			append([]ListEntryID{ids[0]}, ids...),
+			ids[:len(ids)-1],
+			append([]ListEntryID{ids[0]}, ids[:len(ids)-1]...),
+			append([]ListEntryID{"notarealid1231231"}, ids[:len(ids)-1]...),
+			append([]ListEntryID{"notarealid1231231"}, ids[:len(ids)]...),
+		}
+		for i, perm := range errorPerms {
+			if err := db.PermuteListEntries(user, store, perm); err == nil {
+				t.Fatalf("case %d should have failed", i)
+			}
+			checkContents()
+		}
+	})
+}
+
+func listEntriesEqual(l1, l2 *ListEntryInfo) bool {
+	return bytes.Equal(l1.InventoryProductData, l2.InventoryProductData) &&
+		reflect.DeepEqual(l1.Zone, l2.Zone) &&
+		l1.Floor == l2.Floor
 }
