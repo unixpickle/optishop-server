@@ -122,8 +122,17 @@
         return elem;
     }
 
+    function setupStoreHeader() {
+        const header = document.getElementById('store-header');
+        const logo = header.getElementsByClassName('logo')[0];
+        const name = header.getElementsByClassName('name')[0];
+        logo.src = 'svg/logo/' + window.STORE_DATA.source + '.svg';
+        name.textContent = window.STORE_DATA.name;
+    }
+
     window.addEventListener('load', () => {
         window.listPage = new ListPage();
+        setupStoreHeader();
     });
 
 })();

@@ -86,6 +86,27 @@ func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userID := r.Context().Value(UserKey).(db.UserID)
+	storeID := r.Context().Value(StoreIDKey).(db.StoreID)
+	record, err := s.DB.Store(userID, storeID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	storeDesc := &ClientStoreDesc{
+		ID:      string(record.ID),
+		Source:  record.Info.SourceName,
+		Name:    record.Info.StoreName,
+		Address: record.Info.StoreAddress,
+	}
+
+	storeData, err := json.Marshal(storeDesc)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	list, err := s.getClientListItems(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -98,8 +119,9 @@ func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page := bytes.Replace(pageData, []byte("INSERT_DATA_HERE"), listData, 1)
-	w.Write(page)
+	pageData = bytes.Replace(pageData, []byte("INSERT_DATA_HERE"), listData, 1)
+	pageData = bytes.Replace(pageData, []byte("INSERT_STORE_DATA_HERE"), storeData, 1)
+	w.Write(pageData)
 }
 
 func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {

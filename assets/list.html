@@ -6,12 +6,18 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <link rel="stylesheet" type="text/css" href="style.css">
         <script type="text/javascript">
+        window.STORE_DATA = INSERT_STORE_DATA_HERE;
         window.LIST_DATA = INSERT_DATA_HERE;
         </script>
         <script src="js/common.js"></script>
         <script src="js/list.js"></script>
     </head>
     <body>
+        <nav class="store-header" id="store-header">
+            <a href="/" class="back">Back to Stores</a>
+            <img class="logo">
+            <label class="name"></label>
+        </nav>
         <div class="modify-buttons">
             <button class="add-button" id="add-button">Add Item</button>
             <button class="sort-button" id="sort-button">Sort</button>

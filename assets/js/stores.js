@@ -15,7 +15,7 @@
         }
 
         selectedListItem(store) {
-            window.open('/list?store=' + encodeURIComponent(store.id));
+            window.location = '/list?store=' + encodeURIComponent(store.id);
         }
 
         async addItem(store) {
