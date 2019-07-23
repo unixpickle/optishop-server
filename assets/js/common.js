@@ -94,6 +94,7 @@ class AddDialog {
         this.searchButton.addEventListener('click', () => this.search());
         this.searchBox.addEventListener('keyup', (e) => {
             if (e.which === ENTER_KEY) {
+                this.searchBox.blur();
                 this.search();
             }
         })
