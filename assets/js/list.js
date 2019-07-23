@@ -5,7 +5,8 @@
             super();
             this.sortButton = document.getElementById('sort-button');
             this.sortButton.addEventListener('click', () => {
-                this.sort().catch((err) => handleError(err));
+                const hideLoader = showOverlayLoader();
+                this.sort().catch(handleError).finally(hideLoader);
             });
             this.routeButton = document.getElementById('route-button');
             this.routeButton.addEventListener('click', () => {

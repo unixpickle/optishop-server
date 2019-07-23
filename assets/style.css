@@ -350,6 +350,30 @@ button, input[type="submit"] {
     top: 80px;
 }
 
+.loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+.loader-overlay-container {
+    position: absolute;
+    top: calc(50% - 75px);
+    left: calc(50% - 75px);
+    width: 150px;
+    height: 150px;
+    background-color: white;
+}
+
+.loader-overlay-container .loader {
+    position: absolute;
+    top: calc(50% - 15px);
+    left: calc(50% - 15px);
+}
+
 .loader {
     background-image: url('svg/loader.svg');
     background-size: 100% 100%;

@@ -1,5 +1,6 @@
 const ENTER_KEY = 13;
 const ESCAPE_KEY = 27;
+const MIN_OVERLAY_LOADER_TIME = 300;
 
 class ListingPage {
     constructor() {
@@ -10,7 +11,8 @@ class ListingPage {
 
         this.addButton.addEventListener('click', () => this.addDialog.open());
         this.addDialog.onAdd = (item) => {
-            this.addItem(item).catch((err) => handleError(err));
+            const hideLoader = showOverlayLoader();
+            this.addItem(item).catch(handleError).finally(hideLoader);
         }
     }
 
@@ -41,7 +43,8 @@ class ListingPage {
         deleteButton.textContent = 'Delete';
         deleteButton.addEventListener('click', (e) => {
             e.stopPropagation();
-            this.deleteItem(item).catch((err) => handleError(err));
+            const hideLoader = showOverlayLoader();
+            this.deleteItem(item).catch(handleError).finally(hideLoader);
         });
         element.appendChild(deleteButton);
         this.itemList.appendChild(element);
@@ -173,4 +176,23 @@ function createBasicLoader() {
     const element = document.createElement('div');
     element.className = 'loader';
     return element;
+}
+
+function showOverlayLoader() {
+    const background = document.createElement('div');
+    background.className = 'loader-overlay';
+    const container = document.createElement('div');
+    container.className = 'loader-overlay-container';
+    container.appendChild(createBasicLoader());
+    background.appendChild(container);
+    document.body.appendChild(background);
+    const shownTime = new Date().getTime();
+    return () => {
+        const elapsed = Math.max(0, new Date().getTime() - shownTime);
+        if (elapsed > MIN_OVERLAY_LOADER_TIME) {
+            document.body.removeChild(background);
+            return;
+        }
+        setTimeout(() => document.body.removeChild(background), MIN_OVERLAY_LOADER_TIME - elapsed);
+    }
 }
