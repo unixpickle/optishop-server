@@ -79,6 +79,7 @@ class AddDialog {
         this.searchButton = document.getElementById('search-button');
         this.searchResults = document.getElementById('search-results');
         this.closeAddButton = document.getElementById('close-add-button');
+        this.loader = createBasicLoader();
 
         // Used to prevent old requests from affecting the
         // add dialog if it is closed and re-opened.
@@ -107,6 +108,7 @@ class AddDialog {
         this.instanceNum++;
         this.searchBox.value = '';
         this.searchResults.innerHTML = '';
+        this.hideLoader();
         this.element.style.display = 'block';
         this.searchBox.focus();
     }
@@ -122,10 +124,12 @@ class AddDialog {
         const instanceNum = this.instanceNum;
 
         this.searchResults.innerHTML = '';
+        this.showLoader();
         this.fetchSearchResults(query).then((results) => {
             if (instanceNum !== this.instanceNum) {
                 return;
             }
+            this.hideLoader();
             results.forEach((item) => {
                 const elem = this.createListItem(item);
                 elem.addEventListener('click', () => {
@@ -135,8 +139,21 @@ class AddDialog {
                 this.searchResults.appendChild(elem);
             });
         }).catch((err) => {
+            this.hideLoader();
             handleError(err);
         });
+    }
+
+    hideLoader() {
+        if (this.loader.parentElement) {
+            this.loader.parentElement.removeChild(this.loader);
+        }
+    }
+
+    showLoader() {
+        if (!this.loader.parentElement) {
+            this.element.appendChild(this.loader);
+        }
     }
 
     fetchSearchResults(query) {
@@ -150,4 +167,10 @@ class AddDialog {
 
 function handleError(err) {
     alert('Error: ' + err);
+}
+
+function createBasicLoader() {
+    const element = document.createElement('div');
+    element.className = 'loader';
+    return element;
 }
