@@ -10,10 +10,7 @@ class ListingPage {
         this.addDialog = this.createAddDialog();
 
         this.addButton.addEventListener('click', () => this.addDialog.open());
-        this.addDialog.onAdd = (item) => {
-            const hideLoader = showOverlayLoader();
-            this.addItem(item).catch(handleError).finally(hideLoader);
-        }
+        this.addDialog.onAdd = (item) => this.addItem(item);
     }
 
     updateData(items) {
@@ -138,8 +135,11 @@ class AddDialog {
             results.forEach((item) => {
                 const elem = this.createListItem(item);
                 elem.addEventListener('click', () => {
-                    this.close();
-                    this.onAdd(item);
+                    const hideLoader = showOverlayLoader();
+                    this.onAdd(item)
+                        .then(() => this.close())
+                        .catch(handleError)
+                        .finally(hideLoader);
                 });
                 this.searchResults.appendChild(elem);
             });
