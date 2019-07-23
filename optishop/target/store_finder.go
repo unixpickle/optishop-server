@@ -61,6 +61,13 @@ func (l *LocationInfo) Name() string {
 	return fmt.Sprintf("Location #%d", l.LocationID)
 }
 
+// FullAddress gets the human-readable address of the
+// store.
+func (l *LocationInfo) FullAddress() string {
+	return fmt.Sprintf("%s, %s %s, %s", l.Address.AddressLine1, l.Address.City, l.Address.Region,
+		l.Address.PostalCode)
+}
+
 // SearchStores finds stores based on a query, e.g. a zip
 // code, address, state, etc.
 func (c *Client) SearchStores(query string) ([]*LocationInfo, error) {

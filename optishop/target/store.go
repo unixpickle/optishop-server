@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/unixpickle/optishop-server/optishop"
+	"golang.org/x/net/html"
 )
 
 type inventoryProduct struct {
@@ -14,7 +15,7 @@ type inventoryProduct struct {
 }
 
 func (i *inventoryProduct) Name() string {
-	return i.SearchItem.Title
+	return html.UnescapeString(i.SearchItem.Title)
 }
 
 func (i *inventoryProduct) PhotoURL() string {
@@ -25,7 +26,7 @@ func (i *inventoryProduct) PhotoURL() string {
 }
 
 func (i *inventoryProduct) Description() string {
-	return i.SearchItem.Description
+	return html.UnescapeString(i.SearchItem.Description)
 }
 
 func (i *inventoryProduct) InStock() bool {

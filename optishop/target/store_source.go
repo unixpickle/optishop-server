@@ -22,7 +22,7 @@ func (s *storeDesc) Name() string {
 }
 
 func (s *storeDesc) Address() string {
-	return s.Info.Address.AddressLine1
+	return s.Info.FullAddress()
 }
 
 type StoreSource struct {
