@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -73,7 +74,7 @@ func (c *Client) Search(query, storeID string, offset int) (*SearchResults, erro
 	q.Add("count", "24")
 	q.Add("default_purchasability_filter", "true")
 	q.Add("isDLP", "false")
-	q.Add("keyword", query)
+	q.Add("keyword", strings.ToLower(query))
 	q.Add("offset", strconv.Itoa(offset))
 	q.Add("pricing_store_id", storeID)
 	q.Add("scheduled_delivery_store_id", storeID)
