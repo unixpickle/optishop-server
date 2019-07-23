@@ -75,6 +75,7 @@ class ListingPage {
 class AddDialog {
     constructor() {
         this.element = document.getElementById('add-dialog');
+        this.content = this.element.getElementsByClassName('dialog-content')[0];
         this.searchBox = document.getElementById('search-box');
         this.searchButton = document.getElementById('search-button');
         this.searchResults = document.getElementById('search-results');
@@ -157,7 +158,7 @@ class AddDialog {
 
     showLoader() {
         if (!this.loader.parentElement) {
-            this.element.appendChild(this.loader);
+            this.content.appendChild(this.loader);
         }
     }
 
