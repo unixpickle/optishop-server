@@ -108,6 +108,7 @@ class AddDialog {
     }
 
     open() {
+        document.body.classList.add('doing-search');
         this.instanceNum++;
         this.searchBox.value = '';
         this.searchResults.innerHTML = '';
@@ -117,6 +118,7 @@ class AddDialog {
     }
 
     close() {
+        document.body.classList.remove('doing-search');
         this.instanceNum++;
         this.element.style.display = 'none';
     }

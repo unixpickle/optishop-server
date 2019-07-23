@@ -436,3 +436,8 @@ button, input[type="submit"] {
     line-height: 30px;
     float: right;
 }
+
+body.doing-search .item-list, body.doing-search .empty-list {
+    /* Prevent page from scrolling while adding */
+    display: none !important;
+}
