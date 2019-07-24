@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -53,14 +52,10 @@ func AuthHandler(d db.DB, f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, ok := checkAuth(d, r)
 		if !ok {
-			if strings.HasPrefix(r.URL.Path, "/api/") {
-				serveError(w, r, errors.New("not authenticated"))
-			} else {
-				http.Redirect(w, r, "/login", http.StatusSeeOther)
-			}
-		} else {
-			f(w, r.WithContext(context.WithValue(r.Context(), UserKey, user)))
+			serveError(w, r, errors.New("not authenticated"))
+			return
 		}
+		f(w, r.WithContext(context.WithValue(r.Context(), UserKey, user)))
 	}
 }
 

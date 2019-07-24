@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/ajstarks/svgo/float"
 	"github.com/unixpickle/optishop-server/optishop/visualize"
@@ -82,7 +83,7 @@ func (s *Server) HandleGeneral(w http.ResponseWriter, r *http.Request) {
 func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
 	pageData, err := ioutil.ReadFile(filepath.Join(s.AssetDir, "list.html"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 
@@ -90,7 +91,7 @@ func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
 	storeID := r.Context().Value(StoreIDKey).(db.StoreID)
 	record, err := s.DB.Store(userID, storeID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 
@@ -103,19 +104,19 @@ func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
 
 	storeData, err := json.Marshal(storeDesc)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 
 	list, err := s.getClientListItems(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 
 	listData, err := json.Marshal(list)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 
@@ -137,7 +138,7 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	secret, err := s.DB.UserMetadata(userID, SecretKey)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 	}
 	SetAuthCookie(w, userID, secret)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -146,7 +147,7 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
 	pageData, err := ioutil.ReadFile(filepath.Join(s.AssetDir, "route.html"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 
@@ -156,13 +157,13 @@ func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
 
 	entries, err := s.DB.ListEntries(userID, storeID)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 
 	paths, err := RoutePaths(entries, store, optishop.NewFloorConnectorCached(store.Layout()))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 
@@ -202,12 +203,12 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 
 	secret, err := GenerateSecret()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 	signatureKey, err := GenerateSecret()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 	metadata := map[string]string{
@@ -228,19 +229,19 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 func (s *Server) HandleStores(w http.ResponseWriter, r *http.Request) {
 	pageData, err := ioutil.ReadFile(filepath.Join(s.AssetDir, "stores.html"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 
 	clientStores, err := s.getClientStores(r)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 
 	storeData, err := json.Marshal(clientStores)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		serveError(w, r, err)
 		return
 	}
 
@@ -556,8 +557,12 @@ func (s *Server) getClientStores(r *http.Request) ([]*ClientStoreDesc, error) {
 }
 
 func serveError(w http.ResponseWriter, r *http.Request, err error) {
-	obj := map[string]string{"error": err.Error()}
-	serveObject(w, r, obj)
+	if strings.HasPrefix(r.URL.Path, "/api/") {
+		obj := map[string]string{"error": err.Error()}
+		serveObject(w, r, obj)
+	} else {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func serveObject(w http.ResponseWriter, r *http.Request, obj interface{}) {
