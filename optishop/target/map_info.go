@@ -3,6 +3,7 @@ package target
 import (
 	"encoding/json"
 	"math"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/unixpickle/approb"
@@ -61,6 +62,10 @@ func GetMapInfo(storeID string) (*MapInfo, error) {
 	data, err := GetRequest("https://prod.tgtneptune.com/v2/stores/" + storeID + "/maps")
 	if err != nil {
 		return nil, errors.Wrap(err, "get map info")
+	}
+
+	if len(strings.TrimSpace(string(data))) == 0 {
+		return nil, errors.New("get map info: store does not have a map")
 	}
 
 	var errObj struct {
