@@ -2,6 +2,7 @@ package optishop
 
 import (
 	"math"
+	"sort"
 )
 
 // A TSPSolver is an algorithm that (approximately) solves
@@ -85,4 +86,73 @@ func (f FactorialTSPSolver) recurse(length int, distance float64, used []bool, p
 			used[i] = false
 		}
 	}
+}
+
+// BeamTSPSolver is a TSPSolver that uses beam search to
+// find good solutions which are optimal if the search
+// problem is small, but always fast regardless of the
+// size of the search problem.
+type BeamTSPSolver struct {
+	// BeamSize is the number of search nodes to keep
+	// around at every step of the algorithm.
+	BeamSize int
+}
+
+// SolveTSP generates an approximate (or sometimes excact)
+// solution to the TSP in no more than O(n^3 * BeamSize).
+func (b BeamTSPSolver) SolveTSP(n int, distance func(a, b int) float64) []int {
+	nodes := []beamSearchNode{beamSearchNode{solution: []int{0}}}
+
+	for i := 0; i < n-2; i++ {
+		newNodes := make([]beamSearchNode, 0, len(nodes)*(n-2-i))
+		for _, node := range nodes {
+			for j := 1; j < n-1; j++ {
+				if !node.containsStop(j) {
+					newNodes = append(newNodes, beamSearchNode{
+						solution: append(append([]int{}, node.solution...), j),
+						distance: node.distance + distance(node.solution[i], j),
+					})
+				}
+			}
+		}
+		nodes = newNodes
+		if len(nodes) > b.BeamSize {
+			sort.Slice(nodes, func(i, j int) bool {
+				return nodes[i].distance < nodes[j].distance
+			})
+			nodes = nodes[:b.BeamSize]
+		}
+	}
+
+	for i := range nodes {
+		node := &nodes[i]
+		node.distance += distance(node.solution[len(node.solution)-1], n-1)
+		node.solution = append(node.solution, n-1)
+	}
+
+	shortest := nodes[0].distance
+	solution := nodes[0].solution
+
+	for _, node := range nodes {
+		if node.distance < shortest {
+			shortest = node.distance
+			solution = node.solution
+		}
+	}
+
+	return solution
+}
+
+type beamSearchNode struct {
+	solution []int
+	distance float64
+}
+
+func (b *beamSearchNode) containsStop(idx int) bool {
+	for _, x := range b.solution {
+		if x == idx {
+			return true
+		}
+	}
+	return false
 }
