@@ -18,6 +18,24 @@ type TSPSolver interface {
 	SolveTSP(n int, distance func(a, b int) float64) []int
 }
 
+// SolveTSP solves a Traveling salesman problem quickly,
+// potentially using an approximation if an exact solution
+// is infeasible.
+//
+// This function is like TSPSolver.SolveTSP, except that
+// it automatically selects an appropriate TSPSolver.
+func SolveTSP(n int, distance func(a, b int) float64) []int {
+	if n <= 10 {
+		return (FactorialTSPSolver{}).SolveTSP(n, distance)
+	} else if n <= 30 {
+		return (BeamTSPSolver{BeamSize: 1000}).SolveTSP(n, distance)
+	} else if n <= 50 {
+		return (BeamTSPSolver{BeamSize: 100}).SolveTSP(n, distance)
+	} else {
+		return (GreedyTSPSolver{}).SolveTSP(n, distance)
+	}
+}
+
 // GreedyTSPSolver is a TSPSolver that uses the nearest
 // neighbor algorithm.
 type GreedyTSPSolver struct{}

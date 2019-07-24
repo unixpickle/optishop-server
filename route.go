@@ -46,7 +46,7 @@ func SortEntries(list []*db.ListEntry, store optishop.Store,
 	zones = append(zones, checkout)
 	points := ZonesToPoints(layout, zones)
 	distFunc := conn.DistanceFunc(points)
-	solution := (optishop.FactorialTSPSolver{}).SolveTSP(len(points), distFunc)
+	solution := optishop.SolveTSP(len(points), distFunc)
 
 	var result []*db.ListEntry
 	for _, idx := range solution[1 : len(solution)-1] {
