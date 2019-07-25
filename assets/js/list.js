@@ -12,18 +12,31 @@
             this.routeButton.addEventListener('click', () => {
                 window.open('/route?store=' + encodeURIComponent(currentStore()));
             });
-            this.updateData(this.data || window.LIST_DATA);
         }
 
         async sort() {
+            await this.waitForInitialData();
             const response = await fetch('/api/sort?store=' + encodeURIComponent(currentStore()), {
                 credentials: 'same-origin',
+                cache: 'no-store',
             });
             const data = await response.json();
             if (data.error) {
                 throw data.error;
             }
             this.updateData(data);
+        }
+
+        async fetchData() {
+            const response = await fetch('/api/list?store=' + encodeURIComponent(currentStore()), {
+                credentials: 'same-origin',
+                cache: 'no-store',
+            });
+            const data = await response.json();
+            if (data.error) {
+                throw data.error;
+            }
+            return data;
         }
 
         createAddDialog() {
@@ -49,6 +62,7 @@
                     'content-type': 'application/x-www-form-urlencoded',
                 },
                 body: formData,
+                cache: 'no-store',
             });
             const data = await response.json();
             if (data.error) {
@@ -62,6 +76,7 @@
                 '&item=' + encodeURIComponent(item.id);
             const response = await fetch('/api/removeitem' + query, {
                 credentials: 'same-origin',
+                cache: 'no-store',
             });
             const data = await response.json();
             if (data.error) {
@@ -77,6 +92,7 @@
                 '&query=' + encodeURIComponent(query);
             const response = await fetch('/api/inventoryquery' + queryStr, {
                 credentials: 'same-origin',
+                cache: 'no-store',
             });
             const result = await response.json();
             if (result.error) {

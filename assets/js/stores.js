@@ -1,9 +1,16 @@
 (function () {
 
     class StoresPage extends ListingPage {
-        constructor() {
-            super();
-            this.updateData(this.data || window.STORES_DATA);
+        async fetchData() {
+            const response = await fetch('/api/stores', {
+                credentials: 'same-origin',
+                cache: 'no-store',
+            });
+            const data = await response.json();
+            if (data.error) {
+                throw data.error;
+            }
+            return data;
         }
 
         createAddDialog() {
@@ -29,6 +36,7 @@
                     'content-type': 'application/x-www-form-urlencoded',
                 },
                 body: formData,
+                cache: 'no-store',
             });
             const data = await response.json();
             if (data.error) {
@@ -41,6 +49,7 @@
         async deleteItem(store) {
             const response = await fetch('/api/removestore?store=' + encodeURIComponent(store.id), {
                 credentials: 'same-origin',
+                cache: 'no-store',
             });
             const data = await response.json();
             if (data.error) {
@@ -54,6 +63,7 @@
         async fetchSearchResults(query) {
             const response = await fetch('/api/storequery?query=' + encodeURIComponent(query), {
                 credentials: 'same-origin',
+                cache: 'no-store',
             });
             const result = await response.json();
             if (result.error) {

@@ -164,10 +164,21 @@ button, input[type="submit"] {
     background-image: url('svg/route.svg');
 }
 
-.empty-list, .item-list {
+.empty-list, .item-list, .list-loader {
     width: 600px;
     position: absolute;
     left: calc(50% - 300px);
+}
+
+.list-loader {
+    margin-top: 20px;
+    padding: 10px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+.list-loader .loader {
+    display: inline-block;
 }
 
 .item-list {
@@ -184,13 +195,13 @@ button, input[type="submit"] {
     padding: 20px 10px;
 }
 
-.item-list li, .empty-list {
+.item-list li, .empty-list, .list-loader {
     background-color: white;
     box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.4);
 }
 
 @media screen and (max-width: 620px) {
-    .empty-list, .item-list {
+    .empty-list, .item-list, .list-loader {
         width: calc(100% - 20px);
         position: relative;
         left: 10px;

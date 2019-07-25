@@ -1,40 +1,63 @@
 const ENTER_KEY = 13;
 const ESCAPE_KEY = 27;
 const MIN_OVERLAY_LOADER_TIME = 300;
+const MIN_LIST_LOADER_TIME = 200;
 
 class ListingPage {
     constructor() {
         this.addButton = document.getElementById('add-button');
         this.itemList = document.getElementById('item-list');
         this.emptyList = document.getElementById('empty-list');
+        this.listLoader = document.getElementById('list-loader');
         this.addDialog = this.createAddDialog();
 
         this.addButton.addEventListener('click', () => this.addDialog.open());
-        this.addDialog.onAdd = (item) => this.addItem(item);
+        this.addDialog.onAdd = async (item) => {
+            await this.waitForInitialData();
+            return this.addItem(item);
+        }
         this.addDialog.handleLocationChange();
 
-        this.data = null;
-        if (window.history.state) {
-            this.data = window.history.state;
-        }
+        this.fetchedData = false;
+        this.fetchDataFailed = false;
+        this.fetchInitialData();
+    }
 
-        // When the user hits the back button to go back
-        // from an add dialog, the state should not be
-        // reverted to a previous collection of data.
-        //
-        // The only time history.state is used to populate
-        // the list is when the user goes back from a
-        // completely different page and we get a new
-        // onload event with stale data in the page source.
-        window.addEventListener('popstate', () => {
-            window.history.replaceState(this.data, window.title);
+    fetchInitialData() {
+        const startTime = new Date().getTime();
+        this.fetchData().then((data) => {
+            const elapsed = Math.min(Math.max(0, new Date().getTime() - startTime),
+                MIN_LIST_LOADER_TIME);
+            setTimeout(() => {
+                this.listLoader.style.display = 'none';
+                this.fetchedData = true;
+                this.updateData(data);
+            }, MIN_LIST_LOADER_TIME - elapsed);
+        }).catch((err) => {
+            this.fetchDataFailed = true;
+            handleFatalError(err);
+        });
+    }
+
+    waitForInitialData() {
+        return new Promise((resolve, reject) => {
+            if (this.fetchedData) {
+                resolve();
+                return;
+            }
+            let interval;
+            interval = setInterval(() => {
+                if (this.fetchedData || this.fetchDataFailed) {
+                    clearInterval(interval);
+                }
+                if (this.fetchedData) {
+                    resolve();
+                }
+            }, 100);
         });
     }
 
     updateData(items) {
-        this.data = [];
-        window.history.replaceState(this.data, window.title);
-
         if (items.length === 0) {
             // Empty the list so that if we add a new item
             // with addListItem, old items are not there.
@@ -53,14 +76,6 @@ class ListingPage {
     }
 
     addListItem(item) {
-        if (this.data) {
-            this.data = this.data.slice();
-            this.data.push(item);
-        } else {
-            this.data = [item];
-        }
-        window.history.replaceState(this.data, window.title);
-
         const element = this.createListItem(item);
         element.addEventListener('click', () => {
             this.selectedListItem(item);
@@ -79,6 +94,10 @@ class ListingPage {
         // Incase the list used to be empty.
         this.itemList.style.display = 'block';
         this.emptyList.style.display = 'none';
+    }
+
+    fetchData() {
+        throw new Error('override this in a subclass');
     }
 
     createAddDialog() {
@@ -148,7 +167,7 @@ class AddDialog {
 
     open() {
         if (window.location.hash !== '#add') {
-            window.history.pushState(window.history.state, window.title, '#add');
+            window.history.pushState({}, window.title, '#add');
         }
         document.body.classList.add('doing-search');
         this.instanceNum++;
@@ -162,7 +181,7 @@ class AddDialog {
 
     close() {
         if (window.location.hash === '#add') {
-            window.history.pushState(window.history.state, window.title, '#');
+            window.history.pushState({}, window.title, '#');
         }
         document.body.classList.remove('doing-search');
         this.instanceNum++;
@@ -230,6 +249,17 @@ function handleError(err) {
     } else {
         alert(err.toString());
     }
+}
+
+function handleFatalError(err) {
+    let message = err.toString();
+    if (message.match(/Failed to fetch/)) {
+        message = 'Failed to connect to the server. Try refreshing the page, and check your ' +
+            'internet connection';
+    }
+    document.body.innerHTML = '<div id="general-error"><img src="svg/warning.svg">' +
+        '<label>INSERT_ERROR_HERE</label></div>';
+    document.getElementsByTagName('label')[0].textContent = message;
 }
 
 function createBasicLoader() {
