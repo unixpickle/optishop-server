@@ -58,7 +58,7 @@ func main() {
 		StoreHandler(server.DB, server.StoreCache, server.HandleSortAPI)))
 	http.HandleFunc("/api/storequery", AuthHandler(server.DB, server.HandleStoreQueryAPI))
 	http.HandleFunc("/api/stores", AuthHandler(server.DB, server.HandleStoresAPI))
-	http.ListenAndServe(args.Addr, nil)
+	http.ListenAndServe(args.Addr, UncachedMux(http.DefaultServeMux))
 }
 
 type Server struct {
@@ -551,11 +551,4 @@ func (s *Server) getClientStores(r *http.Request) ([]*ClientStoreDesc, error) {
 	}
 
 	return clientStores, nil
-}
-
-// ServeObject responds to an API request with a JSON
-// serialized object.
-func ServeObject(w http.ResponseWriter, r *http.Request, obj interface{}) {
-	w.Header().Set("content-type", "application/json")
-	json.NewEncoder(w).Encode(obj)
 }

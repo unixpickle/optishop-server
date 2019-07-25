@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	"net/url"
-	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -42,7 +41,7 @@ func ServeFormError(w http.ResponseWriter, r *http.Request, err error) {
 // due to some credential issue, in which case
 // ServeFormError should be used instead.
 func ServeError(w http.ResponseWriter, r *http.Request, err error) {
-	if strings.HasPrefix(r.URL.Path, "/api/") {
+	if IsAPIRequest(r) {
 		obj := map[string]string{"error": HumanizeError(err).Error()}
 		ServeObject(w, r, obj)
 	} else {
