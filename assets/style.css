@@ -428,7 +428,7 @@ button, input[type="submit"] {
     color: transparent;
     width: 20px;
     height: 20px;
-    background-image: url('svg/close.svg');
+    background-image: url('svg/back.svg');
     background-size: 100% 100%;
     cursor: pointer;
     float: left;
