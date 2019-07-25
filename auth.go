@@ -52,7 +52,7 @@ func AuthHandler(d db.DB, f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, ok := checkAuth(d, r)
 		if !ok {
-			serveError(w, r, errors.New("not authenticated"))
+			ServeError(w, r, errors.New("not authenticated"))
 			return
 		}
 		f(w, r.WithContext(context.WithValue(r.Context(), UserKey, user)))

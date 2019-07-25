@@ -195,7 +195,12 @@ class AddDialog {
 }
 
 function handleError(err) {
-    alert('Error: ' + err);
+    if (err.toString().match(/Failed to fetch/)) {
+        alert('Failed to connect to the server. ' +
+            'Please try again or check your internet connection.');
+    } else {
+        alert(err.toString());
+    }
 }
 
 function createBasicLoader() {

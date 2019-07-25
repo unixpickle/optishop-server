@@ -30,13 +30,13 @@ func StoreHandler(d db.DB, sc *StoreCache, h http.HandlerFunc) http.HandlerFunc 
 
 		storeRecord, err := d.Store(user, storeID)
 		if err != nil {
-			serveError(w, r, err)
+			ServeError(w, r, err)
 			return
 		}
 
 		store, err := sc.GetStore(storeRecord.Info.SourceName, storeRecord.Info.StoreData)
 		if err != nil {
-			serveError(w, r, err)
+			ServeError(w, r, err)
 			return
 		}
 

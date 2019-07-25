@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"path/filepath"
 	"regexp"
-	"strings"
 
 	"github.com/ajstarks/svgo/float"
 	"github.com/unixpickle/optishop-server/optishop/visualize"
@@ -83,7 +81,7 @@ func (s *Server) HandleGeneral(w http.ResponseWriter, r *http.Request) {
 func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
 	pageData, err := ioutil.ReadFile(filepath.Join(s.AssetDir, "list.html"))
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
@@ -91,7 +89,7 @@ func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
 	storeID := r.Context().Value(StoreIDKey).(db.StoreID)
 	record, err := s.DB.Store(userID, storeID)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
@@ -104,19 +102,19 @@ func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
 
 	storeData, err := json.Marshal(storeDesc)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
 	list, err := s.getClientListItems(r)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
 	listData, err := json.Marshal(list)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
@@ -133,12 +131,12 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := s.DB.Login(r.FormValue("username"), r.FormValue("password"))
 	if err != nil {
-		http.Redirect(w, r, "/login?error="+url.QueryEscape(err.Error()), http.StatusSeeOther)
+		ServeFormError(w, r, err)
 		return
 	}
 	secret, err := s.DB.UserMetadata(userID, SecretKey)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 	}
 	SetAuthCookie(w, userID, secret)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -147,7 +145,7 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
 	pageData, err := ioutil.ReadFile(filepath.Join(s.AssetDir, "route.html"))
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
@@ -157,13 +155,13 @@ func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
 
 	entries, err := s.DB.ListEntries(userID, storeID)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
 	paths, err := RoutePaths(entries, store, optishop.NewFloorConnectorCached(store.Layout()))
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
@@ -196,19 +194,18 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.FormValue("password") != r.FormValue("confirm") {
-		http.Redirect(w, r, "/signup?error="+url.QueryEscape("passwords do not match"),
-			http.StatusSeeOther)
+		ServeFormError(w, r, errors.New("passwords do not match"))
 		return
 	}
 
 	secret, err := GenerateSecret()
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 	signatureKey, err := GenerateSecret()
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 	metadata := map[string]string{
@@ -218,7 +215,7 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := s.DB.CreateUser(r.FormValue("username"), r.FormValue("password"), metadata)
 	if err != nil {
-		http.Redirect(w, r, "/signup?error="+url.QueryEscape(err.Error()), http.StatusSeeOther)
+		ServeFormError(w, r, err)
 		return
 	}
 
@@ -229,19 +226,19 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 func (s *Server) HandleStores(w http.ResponseWriter, r *http.Request) {
 	pageData, err := ioutil.ReadFile(filepath.Join(s.AssetDir, "stores.html"))
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
 	clientStores, err := s.getClientStores(r)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
 	storeData, err := json.Marshal(clientStores)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
@@ -256,33 +253,33 @@ func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
 
 	var data []byte
 	if err := json.Unmarshal([]byte(r.FormValue("data")), &data); err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
 	sigKey, err := s.DB.UserMetadata(user, SignatureKey)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
 	if SignInventoryItem(sigKey, storeID, data) != r.FormValue("signature") {
-		serveError(w, r, errors.New("invalid signature"))
+		ServeError(w, r, errors.New("invalid signature"))
 		return
 	}
 
 	product, err := store.UnmarshalProduct(data)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 	zone, err := store.Locate(product)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 	if zone == nil {
-		serveError(w, r, errors.New("could not locate product within store"))
+		ServeError(w, r, errors.New("could not locate product within store"))
 		return
 	}
 	floor := store.Layout().ZoneFloor(zone)
@@ -293,7 +290,7 @@ func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
 		Floor:                floor,
 	})
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
@@ -308,30 +305,30 @@ func (s *Server) HandleAddStoreAPI(w http.ResponseWriter, r *http.Request) {
 
 	var data []byte
 	if err := json.Unmarshal([]byte(r.FormValue("data")), &data); err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
 	sigKey, err := s.DB.UserMetadata(user, SignatureKey)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
 	if SignStore(sigKey, sourceName, data) != signature {
-		serveError(w, r, errors.New("invalid signature"))
+		ServeError(w, r, errors.New("invalid signature"))
 		return
 	}
 
 	source, ok := s.Sources[sourceName]
 	if !ok {
-		serveError(w, r, errors.New("missing store source"))
+		ServeError(w, r, errors.New("missing store source"))
 		return
 	}
 
 	store, err := source.UnmarshalStoreDesc(data)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
@@ -342,31 +339,31 @@ func (s *Server) HandleAddStoreAPI(w http.ResponseWriter, r *http.Request) {
 		StoreData:    data,
 	})
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
-	serveObject(w, r, storeID)
+	ServeObject(w, r, storeID)
 }
 
 func (s *Server) HandleChpassAPI(w http.ResponseWriter, r *http.Request) {
 	secret, err := GenerateSecret()
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 	user := r.Context().Value(UserKey).(db.UserID)
 	old := r.FormValue("old")
 	new := r.FormValue("new")
 	if err := s.DB.Chpass(user, old, new); err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 	if err := s.DB.SetUserMetadata(user, SecretKey, secret); err != nil {
-		serveError(w, r, errors.New("failed to log out other sessions"))
+		ServeError(w, r, errors.New("failed to log out other sessions"))
 		return
 	}
 	SetAuthCookie(w, user, secret)
-	serveObject(w, r, map[string]string{})
+	ServeObject(w, r, map[string]string{})
 }
 
 func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request) {
@@ -376,13 +373,13 @@ func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request)
 
 	sigKey, err := s.DB.UserMetadata(user, SignatureKey)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
 	rawResults, err := store.Search(r.FormValue("query"))
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
@@ -390,7 +387,7 @@ func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request)
 	for _, result := range rawResults {
 		data, err := store.MarshalProduct(result)
 		if err != nil {
-			serveError(w, r, err)
+			ServeError(w, r, err)
 			return
 		}
 		results = append(results, &ClientInventoryItem{
@@ -400,16 +397,16 @@ func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request)
 		})
 	}
 
-	serveObject(w, r, results)
+	ServeObject(w, r, results)
 }
 
 func (s *Server) HandleListAPI(w http.ResponseWriter, r *http.Request) {
 	items, err := s.getClientListItems(r)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
-	serveObject(w, r, items)
+	ServeObject(w, r, items)
 }
 
 func (s *Server) getClientListItems(r *http.Request) ([]*ClientListItem, error) {
@@ -444,7 +441,7 @@ func (s *Server) HandleRemoveItemAPI(w http.ResponseWriter, r *http.Request) {
 	store := db.StoreID(r.FormValue("store"))
 	item := db.ListEntryID(r.FormValue("item"))
 	if err := s.DB.RemoveListEntry(user, store, item); err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 	s.HandleListAPI(w, r)
@@ -454,7 +451,7 @@ func (s *Server) HandleRemoveStoreAPI(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(UserKey).(db.UserID)
 	store := db.StoreID(r.FormValue("store"))
 	if err := s.DB.RemoveStore(user, store); err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 	s.HandleStoresAPI(w, r)
@@ -467,13 +464,13 @@ func (s *Server) HandleSortAPI(w http.ResponseWriter, r *http.Request) {
 
 	list, err := s.DB.ListEntries(user, storeID)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
 	entries, err := SortEntries(list, store, optishop.NewFloorConnectorCached(store.Layout()))
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
@@ -482,7 +479,7 @@ func (s *Server) HandleSortAPI(w http.ResponseWriter, r *http.Request) {
 		newIDs[i] = entry.ID
 	}
 	if err := s.DB.PermuteListEntries(user, storeID, newIDs); err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
@@ -493,7 +490,7 @@ func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(UserKey).(db.UserID)
 	sigKey, err := s.DB.UserMetadata(user, SignatureKey)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
 
@@ -503,13 +500,13 @@ func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {
 	for name, source := range s.Sources {
 		results, err := source.QueryStores(query)
 		if err != nil {
-			serveError(w, r, err)
+			ServeError(w, r, err)
 			return
 		}
 		for _, result := range results {
 			data, err := source.MarshalStoreDesc(result)
 			if err != nil {
-				serveError(w, r, err)
+				ServeError(w, r, err)
 				return
 			}
 			responses = append(responses, &ClientStoreDesc{
@@ -523,16 +520,16 @@ func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	serveObject(w, r, responses)
+	ServeObject(w, r, responses)
 }
 
 func (s *Server) HandleStoresAPI(w http.ResponseWriter, r *http.Request) {
 	clientStores, err := s.getClientStores(r)
 	if err != nil {
-		serveError(w, r, err)
+		ServeError(w, r, err)
 		return
 	}
-	serveObject(w, r, clientStores)
+	ServeObject(w, r, clientStores)
 }
 
 func (s *Server) getClientStores(r *http.Request) ([]*ClientStoreDesc, error) {
@@ -556,16 +553,9 @@ func (s *Server) getClientStores(r *http.Request) ([]*ClientStoreDesc, error) {
 	return clientStores, nil
 }
 
-func serveError(w http.ResponseWriter, r *http.Request, err error) {
-	if strings.HasPrefix(r.URL.Path, "/api/") {
-		obj := map[string]string{"error": err.Error()}
-		serveObject(w, r, obj)
-	} else {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-}
-
-func serveObject(w http.ResponseWriter, r *http.Request, obj interface{}) {
+// ServeObject responds to an API request with a JSON
+// serialized object.
+func ServeObject(w http.ResponseWriter, r *http.Request, obj interface{}) {
 	w.Header().Set("content-type", "application/json")
 	json.NewEncoder(w).Encode(obj)
 }
