@@ -11,6 +11,7 @@ class ListingPage {
 
         this.addButton.addEventListener('click', () => this.addDialog.open());
         this.addDialog.onAdd = (item) => this.addItem(item);
+        this.addDialog.handleLocationChange();
     }
 
     updateData(items) {
@@ -99,13 +100,26 @@ class AddDialog {
                 this.searchBox.blur();
                 this.search();
             }
-        })
+        });
+
+        window.addEventListener('popstate', () => this.handleLocationChange());
 
         // Callback which is called when an item is selected.
         this.onAdd = (item) => null;
     }
 
+    handleLocationChange() {
+        if (window.location.hash === '#add') {
+            this.open();
+        } else {
+            this.close();
+        }
+    }
+
     open() {
+        if (window.location.hash !== '#add') {
+            window.history.pushState({}, window.title, '#add');
+        }
         document.body.classList.add('doing-search');
         this.instanceNum++;
         this.searchBox.value = '';
@@ -116,6 +130,9 @@ class AddDialog {
     }
 
     close() {
+        if (window.location.hash === '#add') {
+            window.history.pushState({}, window.title, '#');
+        }
         document.body.classList.remove('doing-search');
         this.instanceNum++;
         this.element.style.display = 'none';
