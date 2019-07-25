@@ -21,6 +21,7 @@ import (
 const (
 	fileDBHash       = "hash"
 	fileDBStores     = "stores"
+	fileDBUsername   = "username"
 	fileDBListPrefix = "store_"
 	fileDBMeta       = "meta_"
 )
@@ -70,6 +71,9 @@ func (f *FileDB) setupNewUserFields(username, password string, metadata map[stri
 		return err
 	}
 	if err := f.encodeUserField(username, fileDBStores, []*StoreRecord{}); err != nil {
+		return err
+	}
+	if err := f.writeUserField(username, fileDBUsername, []byte(username)); err != nil {
 		return err
 	}
 	for field, value := range metadata {
