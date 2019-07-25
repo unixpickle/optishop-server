@@ -17,6 +17,18 @@ class ListingPage {
         if (window.history.state) {
             this.data = window.history.state;
         }
+
+        // When the user hits the back button to go back
+        // from an add dialog, the state should not be
+        // reverted to a previous collection of data.
+        //
+        // The only time history.state is used to populate
+        // the list is when the user goes back from a
+        // completely different page and we get a new
+        // onload event with stale data in the page source.
+        window.addEventListener('popstate', () => {
+            window.history.replaceState(this.data, window.title);
+        });
     }
 
     updateData(items) {
