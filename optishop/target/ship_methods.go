@@ -64,7 +64,11 @@ func ShipMethods(storeID string, partIDs []string) ([]*ShipMethodsResult, error)
 		} `json:"product"`
 	}
 	if err := json.Unmarshal(data, &response); err != nil {
-		return nil, errors.Wrap(err, "ship methods")
+		// If there's only one result, the response may
+		// be bare, not in an array.
+		if json.Unmarshal([]byte("["+string(data)+"]"), &response) != nil {
+			return nil, errors.Wrap(err, "ship methods")
+		}
 	}
 
 	var results []*ShipMethodsResult
