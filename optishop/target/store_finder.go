@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/pkg/errors"
 )
@@ -80,6 +81,9 @@ func (c *Client) SearchStores(query string) ([]*LocationInfo, error) {
 	data, err := GetRequest(u)
 	if err != nil {
 		return nil, errors.Wrap(err, "search stores")
+	}
+	if len(strings.TrimSpace(string(data))) == 0 {
+		return nil, err
 	}
 	var response []struct {
 		Locations []*LocationInfo `json:"locations"`

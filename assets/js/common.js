@@ -80,6 +80,7 @@ class AddDialog {
         this.searchBox = document.getElementById('search-box');
         this.searchButton = document.getElementById('search-button');
         this.searchResults = document.getElementById('search-results');
+        this.noResults = document.getElementById('no-results');
         this.closeAddButton = document.getElementById('close-add-button');
         this.loader = createBasicLoader();
 
@@ -124,6 +125,7 @@ class AddDialog {
         this.instanceNum++;
         this.searchBox.value = '';
         this.searchResults.innerHTML = '';
+        this.noResults.style.display = 'none';
         this.hideLoader();
         this.element.style.display = 'block';
         this.searchBox.focus();
@@ -144,6 +146,7 @@ class AddDialog {
         const instanceNum = this.instanceNum;
 
         this.searchResults.innerHTML = '';
+        this.noResults.style.display = 'none';
         this.showLoader();
         this.fetchSearchResults(query).then((results) => {
             if (instanceNum !== this.instanceNum) {
@@ -161,6 +164,9 @@ class AddDialog {
                 });
                 this.searchResults.appendChild(elem);
             });
+            if (results.length === 0) {
+                this.noResults.style.display = 'block';
+            }
         }).catch((err) => {
             this.hideLoader();
             handleError(err);
