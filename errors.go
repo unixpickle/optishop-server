@@ -18,6 +18,8 @@ var errorMap = map[string]string{
 	"create user: user already exists":                                 "That username is already in use.",
 	"passwords do not match":                                           "The passwords you entered do not match",
 	"not authenticated":                                                "You are no longer signed in. Please refresh the page and sign in.",
+	"get store: store not found":                                       "The store could not be found. Did you delete it?",
+	"remove list entry: entry not found":                               "The entry does not exist. Did you delete it?",
 }
 
 // HumanizeError turns an error message into a more
