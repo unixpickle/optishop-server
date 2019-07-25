@@ -12,9 +12,17 @@ class ListingPage {
         this.addButton.addEventListener('click', () => this.addDialog.open());
         this.addDialog.onAdd = (item) => this.addItem(item);
         this.addDialog.handleLocationChange();
+
+        this.data = null;
+        if (window.history.state) {
+            this.data = window.history.state;
+        }
     }
 
     updateData(items) {
+        this.data = [];
+        window.history.replaceState(this.data, window.title);
+
         if (items.length === 0) {
             // Empty the list so that if we add a new item
             // with addListItem, old items are not there.
@@ -23,6 +31,7 @@ class ListingPage {
             this.emptyList.style.display = 'block';
             return;
         }
+
         this.itemList.innerHTML = '';
         items.forEach((item) => {
             this.addListItem(item);
@@ -32,6 +41,14 @@ class ListingPage {
     }
 
     addListItem(item) {
+        if (this.data) {
+            this.data = this.data.slice();
+            this.data.push(item);
+        } else {
+            this.data = [item];
+        }
+        window.history.replaceState(this.data, window.title);
+
         const element = this.createListItem(item);
         element.addEventListener('click', () => {
             this.selectedListItem(item);
@@ -119,7 +136,7 @@ class AddDialog {
 
     open() {
         if (window.location.hash !== '#add') {
-            window.history.pushState({}, window.title, '#add');
+            window.history.pushState(window.history.state, window.title, '#add');
         }
         document.body.classList.add('doing-search');
         this.instanceNum++;
@@ -133,7 +150,7 @@ class AddDialog {
 
     close() {
         if (window.location.hash === '#add') {
-            window.history.pushState({}, window.title, '#');
+            window.history.pushState(window.history.state, window.title, '#');
         }
         document.body.classList.remove('doing-search');
         this.instanceNum++;

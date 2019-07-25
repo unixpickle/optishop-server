@@ -12,7 +12,7 @@
             this.routeButton.addEventListener('click', () => {
                 window.open('/route?store=' + encodeURIComponent(currentStore()));
             });
-            this.updateData(window.LIST_DATA);
+            this.updateData(this.data || window.LIST_DATA);
         }
 
         async sort() {

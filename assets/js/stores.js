@@ -3,7 +3,7 @@
     class StoresPage extends ListingPage {
         constructor() {
             super();
-            this.updateData(window.STORES_DATA);
+            this.updateData(this.data || window.STORES_DATA);
         }
 
         createAddDialog() {
