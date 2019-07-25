@@ -82,7 +82,7 @@
             if (result.error) {
                 throw result.error;
             }
-            return result;
+            return result.filter((x) => x.inStock);
         }
 
         createListItem(item) {
