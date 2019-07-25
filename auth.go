@@ -48,12 +48,12 @@ func SetAuthCookie(w http.ResponseWriter, user db.UserID, secret string) {
 //
 // The handler will get a UserKey added to its request
 // context.
-func AuthHandler(d db.DB, f http.HandlerFunc) http.HandlerFunc {
+func (s *Server) AuthHandler(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user, ok := checkAuth(d, r)
+		user, ok := checkAuth(s.DB, r)
 		if !ok {
 			if IsAPIRequest(r) {
-				ServeError(w, r, errors.New("not authenticated"))
+				s.ServeError(w, r, errors.New("not authenticated"))
 			} else {
 				http.Redirect(w, r, "/login", http.StatusSeeOther)
 			}

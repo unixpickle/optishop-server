@@ -23,20 +23,20 @@ var StoreIDKey StoreIDKeyType
 // StoreHandler wraps an HTTP handler for requests that
 // include a store ID, automatically providing the store
 // as part of the context.
-func StoreHandler(d db.DB, sc *StoreCache, h http.HandlerFunc) http.HandlerFunc {
+func (s *Server) StoreHandler(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user := r.Context().Value(UserKey).(db.UserID)
 		storeID := db.StoreID(r.FormValue("store"))
 
-		storeRecord, err := d.Store(user, storeID)
+		storeRecord, err := s.DB.Store(user, storeID)
 		if err != nil {
-			ServeError(w, r, err)
+			s.ServeError(w, r, err)
 			return
 		}
 
-		store, err := sc.GetStore(storeRecord.Info.SourceName, storeRecord.Info.StoreData)
+		store, err := s.StoreCache.GetStore(storeRecord.Info.SourceName, storeRecord.Info.StoreData)
 		if err != nil {
-			ServeError(w, r, err)
+			s.ServeError(w, r, err)
 			return
 		}
 

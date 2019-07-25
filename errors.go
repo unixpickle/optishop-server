@@ -1,14 +1,17 @@
 package main
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path/filepath"
 
 	"github.com/pkg/errors"
 )
 
 var errorMap = map[string]string{
-	"get store: create store: get map info: store does not have a map": "There is not digital map available for this store. Try choosing a different store.",
+	"get store: create store: get map info: store does not have a map": "There is no digital map available for this store. Try choosing a different store.",
 	"could not locate product within store":                            "This product has no listed aisle or department section. Try choosing a different, similar product.",
 	"check login: password incorrect":                                  "The password you entered is incorrect.",
 	"check login: user does not exist":                                 "The username you entered does not exist.",
@@ -40,11 +43,21 @@ func ServeFormError(w http.ResponseWriter, r *http.Request, err error) {
 // used is when the error occurs on a login or signup form
 // due to some credential issue, in which case
 // ServeFormError should be used instead.
-func ServeError(w http.ResponseWriter, r *http.Request, err error) {
+func (s *Server) ServeError(w http.ResponseWriter, r *http.Request, err error) {
+	message := HumanizeError(err).Error()
+
 	if IsAPIRequest(r) {
-		obj := map[string]string{"error": HumanizeError(err).Error()}
+		obj := map[string]string{"error": message}
 		ServeObject(w, r, obj)
-	} else {
-		http.Error(w, HumanizeError(err).Error(), http.StatusInternalServerError)
+		return
 	}
+
+	pageData, err := ioutil.ReadFile(filepath.Join(s.AssetDir, "error.html"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	pageData = bytes.Replace(pageData, []byte("INSERT_ERROR_HERE"), []byte(message), 1)
+	w.Write(pageData)
 }

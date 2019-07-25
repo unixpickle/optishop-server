@@ -99,6 +99,29 @@ button, input[type="submit"] {
     }
 }
 
+#general-error {
+    position: absolute;
+    left: calc(50% - 150px);
+    top: calc(50% - 150px);
+    width: 300px;
+    height: 300px;
+    padding: 150px 16px 8px 16px;
+    box-sizing: border-box;
+    background-color: white;
+    box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.4);
+
+    text-align: center;
+    color: #500;
+}
+
+#general-error img {
+    position: absolute;
+    width: 100px;
+    height: 100px;
+    left: calc(50% - 50px);
+    top: 20px;
+}
+
 .modify-buttons {
     text-align: center;
     margin-top: 10px;
