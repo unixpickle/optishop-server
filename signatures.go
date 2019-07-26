@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
 
@@ -15,9 +16,8 @@ const SignatureKey = "signatureKey"
 // prevents a user from modifying the data while still
 // producing the same signature.
 func SignData(sigKey string, data []byte) string {
-	combined := append(append([]byte(sigKey), data...), []byte(sigKey)...)
-	hashed := sha256.Sum256(combined)
-	return base64.StdEncoding.EncodeToString(hashed[:])
+	mac := hmac.New(sha256.New, []byte(sigKey))
+	return base64.StdEncoding.EncodeToString(mac.Sum(data))
 }
 
 // SignStore generates a unique signature for a store
