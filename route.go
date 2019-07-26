@@ -62,17 +62,18 @@ func SortEntries(list []*db.ListEntry, store optishop.Store,
 }
 
 // RoutePaths finds the optimal route and returns all of
-// the path segments of it.
+// the path segments of it, as well as the sorted list of
+// entries for convenience.
 func RoutePaths(list []*db.ListEntry, store optishop.Store,
-	conn *optishop.FloorConnector) ([]optishop.FloorPath, error) {
+	conn *optishop.FloorConnector) ([]optishop.FloorPath, []*db.ListEntry, error) {
 	entrance, checkout := EntranceAndCheckout(store.Layout())
 	if entrance == nil || checkout == nil {
-		return nil, errors.New("route paths: unable to locate entrance or checkout")
+		return nil, nil, errors.New("route paths: unable to locate entrance or checkout")
 	}
 
 	sorted, err := SortEntries(list, store, conn)
 	if err != nil {
-		return nil, errors.Wrap(err, "route paths")
+		return nil, nil, errors.Wrap(err, "route paths")
 	}
 
 	zones := make([]*optishop.Zone, len(sorted)+2)
@@ -87,11 +88,11 @@ func RoutePaths(list []*db.ListEntry, store optishop.Store,
 	for i := 1; i < len(zones); i++ {
 		path := conn.Connect(points[i-1], points[i])
 		if path == nil {
-			return nil, errors.New("route paths: unable to connect two points")
+			return nil, nil, errors.New("route paths: unable to connect two points")
 		}
 		res = append(res, path)
 	}
-	return res, nil
+	return res, sorted, nil
 }
 
 // EntranceAndCheckout finds the entrance and checkout

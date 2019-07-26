@@ -142,7 +142,8 @@ func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	paths, err := RoutePaths(entries, store, optishop.NewFloorConnectorCached(store.Layout()))
+	connector := optishop.NewFloorConnectorCached(store.Layout())
+	paths, sorted, err := RoutePaths(entries, store, connector)
 	if err != nil {
 		s.ServeError(w, r, err)
 		return
@@ -154,10 +155,23 @@ func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
 	width, height, _ := visualize.MultiFloorGeometry(store.Layout())
 	canvas.Start(width, height, fmt.Sprintf("viewBox=\"0 0 %f %f\"", width, height))
 
-	visualize.DrawFloors(canvas, store.Layout())
+	visualize.MultiFloorLoop(store.Layout(), func(f *optishop.Floor, x, y float64) {
+		visualize.DrawFloorPolygons(canvas, f, x, y)
+	})
 	for _, path := range paths {
 		visualize.DrawFloorPath(canvas, store.Layout(), path)
 	}
+	fontSize := width * visualize.FontSizeFrac * 2
+	visualize.MultiFloorLoop(store.Layout(), func(f *optishop.Floor, x, y float64) {
+		floorIdx := store.Layout().FloorIndex(f)
+		var zones []*optishop.Zone
+		for _, entry := range sorted {
+			if store.Layout().ZoneFloor(entry.Info.Zone) == floorIdx {
+				zones = append(zones, entry.Info.Zone)
+			}
+		}
+		visualize.DrawZoneLabels(canvas, zones, x, y, fontSize)
+	})
 
 	canvas.End()
 

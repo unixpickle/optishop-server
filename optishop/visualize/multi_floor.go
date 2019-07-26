@@ -18,7 +18,7 @@ const FontSizeFrac = 1.0 / 150.0
 
 // PathFrac controls how thick paths are with respect to
 // the size of the layout.
-const PathFrac = 0.005
+const PathFrac = 0.002
 
 // MultiFloorGeometry computes the total width and height
 // of a rendered layout, when all the floors are rendered
@@ -58,7 +58,7 @@ func DrawFloors(canvas *svg.SVG, layout *optishop.Layout) {
 	width, _, _ := MultiFloorGeometry(layout)
 	fontSize := width * FontSizeFrac
 	MultiFloorLoop(layout, func(f *optishop.Floor, x, y float64) {
-		DrawFloor(canvas, f, fontSize, x, y)
+		DrawFloor(canvas, f, x, y, fontSize)
 	})
 }
 
@@ -78,7 +78,9 @@ func DrawFloorPath(canvas *svg.SVG, layout *optishop.Layout, path optishop.Floor
 			}
 			lineWidth := fmt.Sprintf("%.3f", width*PathFrac)
 			canvas.Polyline(pathX, pathY,
-				"stroke-width: "+lineWidth+"px; stroke: #2ed941; fill: none")
+				"stroke-width: "+lineWidth+"px; stroke: #65bcd4; fill: none")
+			canvas.Circle(pathX[len(pathX)-1], pathY[len(pathY)-1], width*PathFrac*2,
+				"fill: #65bcd4")
 		}
 	})
 }
