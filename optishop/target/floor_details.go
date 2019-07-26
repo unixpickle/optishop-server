@@ -57,10 +57,14 @@ func parseFloorDetails(data []byte) (*FloorDetails, error) {
 		return nil, errors.New("missing 'Wall-Shapes' group")
 	}
 	paths := findTag(wallShapes, "path")
-	if len(paths) != 1 {
-		return nil, errors.New("expected exactly one wall shape")
+	if len(paths) == 0 {
+		return nil, errors.New("missing wall shapes")
 	}
-	result.Bounds, err = pathPolygon(paths[0], transform)
+	// Sometimes there are multiple wall shapes, but in
+	// these cases all but one of the shapes tend to just
+	// be a useless tiny rectangle.
+	// See e.g. https://www.target.com/sl/mays-landing/1109.
+	result.Bounds, err = pathPolygon(largestPath(paths), transform)
 	if err != nil {
 		return nil, err
 	}
@@ -103,6 +107,19 @@ func findTag(elem *html.Node, tag string) []*html.Node {
 	return scrape.FindAll(elem, func(n *html.Node) bool {
 		return n.Type == html.ElementNode && n.Data == tag
 	})
+}
+
+func largestPath(elems []*html.Node) *html.Node {
+	if len(elems) == 0 {
+		return nil
+	}
+	res := elems[0]
+	for _, e := range elems[1:] {
+		if len(scrape.Attr(e, "d")) > len(scrape.Attr(res, "d")) {
+			res = e
+		}
+	}
+	return res
 }
 
 // A coordTransform is a 2-D transformation matrix in the
