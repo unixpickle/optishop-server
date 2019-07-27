@@ -44,6 +44,7 @@ func shouldPreventCaching(r *http.Request) bool {
 		"/":       true,
 		"/list":   true,
 		"/login":  true,
+		"/logout": true,
 		"/route":  true,
 		"/signup": true,
 	}
