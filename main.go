@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"time"
 
 	"github.com/ajstarks/svgo/float"
 	"github.com/unixpickle/optishop-server/optishop/visualize"
@@ -39,6 +40,7 @@ func main() {
 	http.HandleFunc("/", server.HandleGeneral)
 	http.HandleFunc("/list", server.AuthHandler(server.StoreHandler(server.HandleList)))
 	http.HandleFunc("/login", server.HandleLogin)
+	http.HandleFunc("/logout", server.HandleLogout)
 	http.HandleFunc("/route", server.AuthHandler(server.StoreHandler(server.HandleRoute)))
 	http.HandleFunc("/signup", server.HandleSignup)
 	http.HandleFunc("/api/additem",
@@ -123,6 +125,15 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	SetAuthCookie(w, userID, secret)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func (s *Server) HandleLogout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:    "session",
+		Value:   "",
+		Expires: time.Now().Add(time.Second),
+	})
+	http.Redirect(w, r, "/login", http.StatusSeeOther)
 }
 
 func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
