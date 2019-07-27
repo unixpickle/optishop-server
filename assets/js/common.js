@@ -137,14 +137,14 @@ class AddDialog {
         this.instanceNum = 0;
 
         this.closeAddButton.addEventListener('click', () => this.close());
-        window.addEventListener('keyup', (e) => {
+        window.addEventListener('keydown', (e) => {
             if (e.which === ESCAPE_KEY) {
                 this.close();
             }
         });
 
         this.searchButton.addEventListener('click', () => this.search());
-        this.searchBox.addEventListener('keyup', (e) => {
+        this.searchBox.addEventListener('keydown', (e) => {
             if (e.which === ENTER_KEY) {
                 this.searchBox.blur();
                 this.search();
@@ -243,12 +243,50 @@ class AddDialog {
 }
 
 function handleError(err) {
-    if (err.toString().match(/Failed to fetch/)) {
-        alert('Failed to connect to the server. ' +
-            'Please try again or check your internet connection.');
-    } else {
-        alert(err.toString());
+    let message = err.toString();
+    if (message.match(/Failed to fetch/)) {
+        message = 'Failed to connect to the server. ' +
+            'Please try again or check your internet connection.';
     }
+
+    const background = document.createElement('div');
+    background.className = 'overlay';
+
+    const container = document.createElement('div');
+    container.className = 'error-overlay-container';
+    container.innerHTML = '<img src="svg/warning.svg">' +
+        '<label>INSERT_ERROR_HERE</label>' +
+        '<button class="close-button">Close</button>';
+    const errorLabel = container.getElementsByTagName('label')[0];
+    errorLabel.textContent = message;
+
+    let keyDownHandler;
+    const closePopup = () => {
+        document.body.removeChild(background);
+        window.removeEventListener('keydown', keyDownHandler, true);
+    };
+
+    const closeButton = container.getElementsByClassName('close-button')[0];
+    closeButton.addEventListener('click', closePopup);
+    container.addEventListener('click', (e) => e.stopPropagation());
+    background.addEventListener('click', closePopup);
+
+    keyDownHandler = (e) => {
+        if (e.which === ESCAPE_KEY) {
+            closePopup();
+            e.stopPropagation();
+            e.preventDefault();
+        }
+    };
+    window.addEventListener('keydown', keyDownHandler, true);
+
+    background.appendChild(container);
+    document.body.appendChild(background);
+
+    // Make the popup the correct height.
+    const height = Math.ceil(90 + 80 + errorLabel.offsetHeight);
+    container.style.height = height + 'px';
+    container.style.top = 'calc(50% - ' + Math.round(height / 2) + 'px)';
 }
 
 function handleFatalError(err) {
@@ -270,7 +308,7 @@ function createBasicLoader() {
 
 function showOverlayLoader() {
     const background = document.createElement('div');
-    background.className = 'loader-overlay';
+    background.className = 'overlay';
     const container = document.createElement('div');
     container.className = 'loader-overlay-container';
     container.appendChild(createBasicLoader());
