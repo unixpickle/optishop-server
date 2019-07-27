@@ -18,6 +18,11 @@ func runGenericTests(t *testing.T, db DB) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		if name, err := db.Username(uid1); err != nil {
+			t.Fatal(err)
+		} else if name != "bob" {
+			t.Error("unexpected username:", name)
+		}
 		if _, err := db.CreateUser("bob", "pass", nil); err == nil {
 			t.Error("account creation should have failed (with same password)")
 		}
@@ -27,6 +32,11 @@ func runGenericTests(t *testing.T, db DB) {
 		uid2, err := db.CreateUser("joe", "ssap", nil)
 		if err != nil {
 			t.Fatal(err)
+		}
+		if name, err := db.Username(uid2); err != nil {
+			t.Fatal(err)
+		} else if name != "joe" {
+			t.Error("unexpected username:", name)
 		}
 		if _, err := db.Login("bob", "aoeu"); err == nil {
 			t.Error("login should have failed with incorrect password")

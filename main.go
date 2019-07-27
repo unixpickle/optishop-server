@@ -221,7 +221,26 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) HandleStores(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, filepath.Join(s.AssetDir, "stores.html"))
+	pageData, err := ioutil.ReadFile(filepath.Join(s.AssetDir, "stores.html"))
+	if err != nil {
+		s.ServeError(w, r, err)
+		return
+	}
+
+	userID := r.Context().Value(UserKey).(db.UserID)
+	username, err := s.DB.Username(userID)
+	if err != nil {
+		s.ServeError(w, r, err)
+		return
+	}
+	usernameData, err := json.Marshal(username)
+	if err != nil {
+		s.ServeError(w, r, err)
+		return
+	}
+
+	pageData = bytes.Replace(pageData, []byte("INSERT_USERNAME"), usernameData, 1)
+	w.Write(pageData)
 }
 
 func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {

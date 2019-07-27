@@ -9,6 +9,17 @@
         <script src="js/stores.js"></script>
     </head>
     <body>
+        <nav class="home-header" id="home-header">
+            <label class="name"></label>
+            <a href="/logout" class="logout">Logout</a>
+        </nav>
+        <script type="text/javascript">
+            (function() {
+                const header = document.getElementById('home-header');
+                const name = header.getElementsByClassName('name')[0];
+                name.textContent = 'Welcome, ' + INSERT_USERNAME;
+            })();
+        </script>
         <div class="modify-buttons">
             <button class="add-button" id="add-button">Add Store</button>
         </div>

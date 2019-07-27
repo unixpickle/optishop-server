@@ -151,6 +151,10 @@ func (f *FileDB) Login(username, password string) (UserID, error) {
 	return UserID(username), nil
 }
 
+func (f *FileDB) Username(user UserID) (string, error) {
+	return string(user), nil
+}
+
 func (f *FileDB) Stores(user UserID) ([]*StoreRecord, error) {
 	f.lock.RLock()
 	defer f.lock.RUnlock()

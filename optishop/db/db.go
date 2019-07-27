@@ -37,6 +37,7 @@ type DB interface {
 	CreateUser(username, password string, metadata map[string]string) (UserID, error)
 	Chpass(user UserID, old, new string) error
 	Login(username, password string) (UserID, error)
+	Username(user UserID) (string, error)
 	UserMetadata(user UserID, field string) (string, error)
 	SetUserMetadata(user UserID, field, value string) error
 	Stores(user UserID) ([]*StoreRecord, error)

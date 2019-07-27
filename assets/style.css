@@ -495,7 +495,7 @@ button, input[type="submit"] {
     background-color: #459cb4;
 }
 
-.store-header {
+.store-header, .home-header {
     position: relative;
     top: 0;
     left: 0;
@@ -533,6 +533,24 @@ button, input[type="submit"] {
     margin-top: 5px;
     line-height: 30px;
     float: right;
+}
+
+.home-header .logout {
+    margin: 5px 10px 0 0;
+    line-height: 30px;
+    float: right;
+    text-decoration: none;
+    color: #65bcd4;
+}
+
+.home-header .logout:hover {
+    color: #459cb4;
+}
+
+.home-header .name {
+    margin: 5px 0 0 10px;
+    line-height: 30px;
+    float: left;
 }
 
 body.doing-search .item-list, body.doing-search .empty-list {
