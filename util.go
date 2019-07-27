@@ -30,6 +30,8 @@ func UncachedMux(m *http.ServeMux) *http.ServeMux {
 			r.Header.Set("cache-control", "no-cache, private, max-age=0")
 			r.Header.Set("pragma", "no-cache")
 			r.Header.Set("expires", time.Unix(0, 0).Format(time.RFC1123))
+		} else {
+			r.Header.Set("expires", time.Now().Add(time.Minute).Format(http.TimeFormat))
 		}
 		h, _ := m.Handler(r)
 		h.ServeHTTP(w, r)
