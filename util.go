@@ -27,11 +27,11 @@ func UncachedMux(m *http.ServeMux) *http.ServeMux {
 	result.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if shouldPreventCaching(r) {
 			// https://stackoverflow.com/questions/33880343/go-webserver-dont-cache-files-using-timestamp
-			r.Header.Set("cache-control", "no-cache, private, max-age=0")
-			r.Header.Set("pragma", "no-cache")
-			r.Header.Set("expires", time.Unix(0, 0).Format(time.RFC1123))
+			w.Header().Set("cache-control", "no-cache, private, max-age=0")
+			w.Header().Set("pragma", "no-cache")
+			w.Header().Set("expires", time.Unix(0, 0).Format(time.RFC1123))
 		} else {
-			r.Header.Set("expires", time.Now().Add(time.Minute).Format(http.TimeFormat))
+			w.Header().Set("expires", time.Now().Add(time.Minute).Format(http.TimeFormat))
 		}
 		h, _ := m.Handler(r)
 		h.ServeHTTP(w, r)
