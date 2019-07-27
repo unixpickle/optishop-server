@@ -245,14 +245,14 @@ button, input[type="submit"] {
 }
 
 .list-item .name {
-    top: 15px;
+    top: 12px;
     font-weight: bolder;
-    max-height: 35px;
+    max-height: 40px;
     overflow: hidden;
 }
 
 .list-item .location {
-    bottom: 15px;
+    bottom: 12px;
     font-style: oblique;
 }
 
