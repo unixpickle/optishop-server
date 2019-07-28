@@ -33,6 +33,7 @@ func main() {
 
 	server := &Server{
 		AssetDir:   args.AssetDir,
+		NumProxies: args.NumProxies,
 		DB:         db,
 		Sources:    sources,
 		StoreCache: NewStoreCache(sources),
@@ -56,11 +57,13 @@ func main() {
 	http.HandleFunc("/api/sort", server.AuthHandler(server.StoreHandler(server.HandleSortAPI)))
 	http.HandleFunc("/api/storequery", server.AuthHandler(server.HandleStoreQueryAPI))
 	http.HandleFunc("/api/stores", server.AuthHandler(server.HandleStoresAPI))
-	http.ListenAndServe(args.Addr, UncachedMux(http.DefaultServeMux))
+	http.ListenAndServe(args.Addr, RateLimitMux(server, UncachedMux(http.DefaultServeMux)))
 }
 
 type Server struct {
 	AssetDir   string
+	NumProxies int
+
 	DB         db.DB
 	Sources    map[string]optishop.StoreSource
 	StoreCache *StoreCache
