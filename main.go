@@ -331,6 +331,12 @@ func (s *Server) HandleAddStoreAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Make sure that the store has an available map, etc.
+	if _, err := s.StoreCache.GetStore(sourceName, data); err != nil {
+		s.ServeError(w, r, err)
+		return
+	}
+
 	source, ok := s.Sources[sourceName]
 	if !ok {
 		s.ServeError(w, r, errors.New("missing store source"))
