@@ -295,7 +295,11 @@ function handleFatalError(err) {
         message = 'Failed to connect to the server. Try refreshing the page, and check your ' +
             'internet connection';
     }
-    document.body.innerHTML = '<div id="general-error"><img src="svg/warning.svg">' +
+    document.body.innerHTML = '<div id="general-error">' +
+        '<svg xmlns="http://www.w3.org/2000/svg" class="error-image" viewBox="0 0 50 50">' +
+        '<path d="M25,2 L2,48 h46 z" fill="#fed22d" stroke-width="3" stroke="black" />' +
+        '<path d="M23,18 h4 v15 h-4 z M23,37 h4 v4 h-4 z" fill="black" stroke-width="2" />' +
+        '</svg>' +
         '<label>INSERT_ERROR_HERE</label></div>';
     document.getElementsByTagName('label')[0].textContent = message;
 }
