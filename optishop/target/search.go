@@ -56,6 +56,7 @@ type SearchItem struct {
 	AvailabilityStatus    string          `json:"availability_status"`
 	SDSAvailabilityStatus string          `json:"scheduled_delivery_store_availability_status"`
 	Price                 ProductPrice    `json:"price"`
+	BulletDescription     []string        `json:"bullet_description"`
 }
 
 // SearchResults stores results from a product search.

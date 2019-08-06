@@ -2,6 +2,7 @@ package target
 
 import (
 	"encoding/json"
+	"regexp"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -26,7 +27,18 @@ func (i *inventoryProduct) PhotoURL() string {
 }
 
 func (i *inventoryProduct) Description() string {
-	return html.UnescapeString(i.SearchItem.Description)
+	res := html.UnescapeString(i.SearchItem.Description)
+	if res != "" {
+		return res
+	}
+	lines := []string{}
+	replacer := regexp.MustCompilePOSIX("<[^>]*>")
+	for _, line := range i.SearchItem.BulletDescription {
+		cleaned := replacer.ReplaceAllString(line, "")
+		cleaned = html.UnescapeString(cleaned)
+		lines = append(lines, "- "+cleaned)
+	}
+	return strings.Join(lines, "\n")
 }
 
 func (i *inventoryProduct) InStock() bool {
