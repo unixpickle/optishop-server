@@ -242,23 +242,9 @@ class AddDialog {
     }
 }
 
-function handleError(err) {
-    let message = err.toString();
-    if (message.match(/Failed to fetch/)) {
-        message = 'Failed to connect to the server. ' +
-            'Please try again or check your internet connection.';
-    }
-
+function showPopupDialog(element) {
     const background = document.createElement('div');
     background.className = 'overlay';
-
-    const container = document.createElement('div');
-    container.className = 'error-overlay-container';
-    container.innerHTML = '<img src="svg/warning.svg">' +
-        '<label>INSERT_ERROR_HERE</label>' +
-        '<button class="close-button">Close</button>';
-    const errorLabel = container.getElementsByTagName('label')[0];
-    errorLabel.textContent = message;
 
     let keyDownHandler;
     const closePopup = () => {
@@ -266,9 +252,10 @@ function handleError(err) {
         window.removeEventListener('keydown', keyDownHandler, true);
     };
 
-    const closeButton = container.getElementsByClassName('close-button')[0];
+    element.addEventListener('click', (e) => e.stopPropagation());
+
+    const closeButton = element.getElementsByClassName('close-button')[0];
     closeButton.addEventListener('click', closePopup);
-    container.addEventListener('click', (e) => e.stopPropagation());
     background.addEventListener('click', closePopup);
 
     keyDownHandler = (e) => {
@@ -280,8 +267,26 @@ function handleError(err) {
     };
     window.addEventListener('keydown', keyDownHandler, true);
 
-    background.appendChild(container);
+    background.appendChild(element);
     document.body.appendChild(background);
+}
+
+function handleError(err) {
+    let message = err.toString();
+    if (message.match(/Failed to fetch/)) {
+        message = 'Failed to connect to the server. ' +
+            'Please try again or check your internet connection.';
+    }
+
+    const container = document.createElement('div');
+    container.className = 'error-overlay-container';
+    container.innerHTML = '<img src="svg/warning.svg">' +
+        '<label>INSERT_ERROR_HERE</label>' +
+        '<button class="close-button">Close</button>';
+    const errorLabel = container.getElementsByTagName('label')[0];
+    errorLabel.textContent = message;
+
+    showPopupDialog(container);
 
     // Make the popup the correct height.
     const height = Math.ceil(90 + 80 + errorLabel.offsetHeight);
