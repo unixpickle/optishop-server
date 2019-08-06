@@ -2,6 +2,11 @@ const ENTER_KEY = 13;
 const ESCAPE_KEY = 27;
 const MIN_OVERLAY_LOADER_TIME = 300;
 const MIN_LIST_LOADER_TIME = 200;
+const ERROR_IMAGE = '<svg xmlns="http://www.w3.org/2000/svg" class="error-image"' +
+    ' viewBox="0 0 50 50">' +
+    '<path d="M25,2 L2,48 h46 z" fill="#fed22d" stroke-width="3" stroke="black" />' +
+    '<path d="M23,18 h4 v15 h-4 z M23,37 h4 v4 h-4 z" fill="black" stroke-width="2" />' +
+    '</svg>';
 
 class ListingPage {
     constructor() {
@@ -280,7 +285,7 @@ function handleError(err) {
 
     const container = document.createElement('div');
     container.className = 'error-overlay-container';
-    container.innerHTML = '<img src="svg/warning.svg">' +
+    container.innerHTML = ERROR_IMAGE +
         '<label>INSERT_ERROR_HERE</label>' +
         '<button class="close-button">Close</button>';
     const errorLabel = container.getElementsByTagName('label')[0];
@@ -301,10 +306,7 @@ function handleFatalError(err) {
             'internet connection';
     }
     document.body.innerHTML = '<div id="general-error">' +
-        '<svg xmlns="http://www.w3.org/2000/svg" class="error-image" viewBox="0 0 50 50">' +
-        '<path d="M25,2 L2,48 h46 z" fill="#fed22d" stroke-width="3" stroke="black" />' +
-        '<path d="M23,18 h4 v15 h-4 z M23,37 h4 v4 h-4 z" fill="black" stroke-width="2" />' +
-        '</svg>' +
+        ERROR_IMAGE +
         '<label>INSERT_ERROR_HERE</label></div>';
     document.getElementsByTagName('label')[0].textContent = message;
 }
