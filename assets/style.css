@@ -454,7 +454,7 @@ button, input[type="submit"] {
 .error-overlay-container {
     position: absolute;
     left: calc(50% - 150px);
-    top: calc(50% - 150px);
+    top: calc(50% - 135px);
     width: 300px;
     height: 270px;
     padding: 90px 10px 80px 10px;
@@ -494,6 +494,63 @@ button, input[type="submit"] {
 }
 
 .error-overlay-container .close-button:hover {
+    background-color: #459cb4;
+}
+
+.product-popup {
+    position: absolute;
+    left: calc(50% - 150px);
+    top: calc(50% - 150px);
+    width: 300px;
+    height: 270px;
+    box-sizing: border-box;
+    background-color: white;
+
+    box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.4);
+}
+
+.product-popup .scrollable {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 80px);
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+.product-popup .name {
+    display: block;
+    font-weight: bolder;
+    margin-bottom: 10px;
+}
+
+.product-popup .price {
+    display: block;
+    font-style: oblique;
+    margin-bottom: 10px;
+}
+
+.product-popup .description {
+    white-space: pre-line;
+}
+
+.product-popup .close-button {
+    position: absolute;
+    left: 20px;
+    bottom: 20px;
+    width: calc(100% - 40px);
+    height: 40px;
+    line-height: 40px;
+
+    cursor: pointer;
+    font-size: 20px;
+    color: white;
+    background-color: #65bcd4;
+}
+
+.product-popup .close-button:hover {
     background-color: #459cb4;
 }
 

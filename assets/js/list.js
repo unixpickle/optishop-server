@@ -43,12 +43,12 @@
             return new AddProductDialog();
         }
 
-        createListItem(store) {
-            return createListItem(store);
+        createListItem(item) {
+            return createListItem(item);
         }
 
-        selectedListItem(store) {
-            // TODO: show product info dialog here.
+        selectedListItem(item) {
+            showProductInfo(item);
         }
 
         async addItem(item) {
@@ -136,6 +136,23 @@
         elem.appendChild(zone);
 
         return elem;
+    }
+
+    function showProductInfo(info) {
+        const container = document.createElement('div');
+        container.className = 'product-popup';
+        container.innerHTML = '<div class="scrollable">' +
+            '<label class="name"></label>' +
+            '<label class="price"></label>' +
+            '<span class="description"></span>' +
+            '</div>' +
+            '<button class="close-button">Close</button>';
+
+        container.getElementsByClassName('name')[0].textContent = info.name;
+        container.getElementsByClassName('price')[0].textContent = info.price;
+        container.getElementsByClassName('description')[0].textContent = info.description;
+
+        showPopupDialog(container);
     }
 
     function setupStoreHeader() {
