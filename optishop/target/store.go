@@ -29,16 +29,23 @@ func (i *inventoryProduct) PhotoURL() string {
 func (i *inventoryProduct) Description() string {
 	res := html.UnescapeString(i.SearchItem.Description)
 	if res != "" {
-		return res
+		return cleanupDescriptionHTML(res)
 	}
 	lines := []string{}
-	replacer := regexp.MustCompilePOSIX("<[^>]*>")
 	for _, line := range i.SearchItem.BulletDescription {
-		cleaned := replacer.ReplaceAllString(line, "")
-		cleaned = html.UnescapeString(cleaned)
-		lines = append(lines, "- "+cleaned)
+		lines = append(lines, "- "+cleanupDescriptionHTML(line))
 	}
 	return strings.Join(lines, "\n")
+}
+
+func cleanupDescriptionHTML(desc string) string {
+	replacer := regexp.MustCompilePOSIX("<[^>]*>")
+	cleaned := desc
+	cleaned = strings.ReplaceAll(cleaned, "<br>", "\n")
+	cleaned = strings.ReplaceAll(cleaned, "<br />", "\n")
+	cleaned = replacer.ReplaceAllString(cleaned, "")
+	cleaned = html.UnescapeString(cleaned)
+	return cleaned
 }
 
 func (i *inventoryProduct) InStock() bool {
