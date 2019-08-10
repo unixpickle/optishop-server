@@ -4,11 +4,14 @@ import (
 	"context"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/unixpickle/optishop-server/optishop"
 	"github.com/unixpickle/optishop-server/optishop/db"
 )
+
+const CacheDeadline = time.Hour * 24
 
 type StoreKeyType int
 
@@ -52,16 +55,18 @@ func (s *Server) StoreHandler(h http.HandlerFunc) http.HandlerFunc {
 type StoreCache struct {
 	sources map[string]optishop.StoreSource
 
-	lock  sync.RWMutex
-	cache map[cacheKey]optishop.Store
+	lock        sync.RWMutex
+	cache       map[cacheKey]optishop.Store
+	expirations map[cacheKey]time.Time
 }
 
 // NewStoreCache creates a StoreCache that will used the
 // named collection of store sources.
 func NewStoreCache(sources map[string]optishop.StoreSource) *StoreCache {
 	return &StoreCache{
-		sources: sources,
-		cache:   map[cacheKey]optishop.Store{},
+		sources:     sources,
+		cache:       map[cacheKey]optishop.Store{},
+		expirations: map[cacheKey]time.Time{},
 	}
 }
 
@@ -80,8 +85,9 @@ func (s *StoreCache) GetStore(sourceName string, descData []byte) (optishop.Stor
 	key := cacheKey{Source: sourceName, Name: desc.Name(), Address: desc.Address()}
 	s.lock.RLock()
 	existing, ok := s.cache[key]
+	expiration := s.expirations[key]
 	s.lock.RUnlock()
-	if ok {
+	if ok && time.Now().Before(expiration) {
 		return existing, nil
 	}
 
@@ -92,6 +98,7 @@ func (s *StoreCache) GetStore(sourceName string, descData []byte) (optishop.Stor
 
 	s.lock.Lock()
 	s.cache[key] = store
+	s.expirations[key] = time.Now().Add(CacheDeadline)
 	s.lock.Unlock()
 
 	return store, nil
