@@ -70,6 +70,7 @@ func AddFloorDetails(src *FloorDetails, dst *optishop.Floor) {
 		dst.Zones = append(dst.Zones, &optishop.Zone{
 			Name:     name,
 			Location: loc,
+			Specific: true,
 		})
 	}
 

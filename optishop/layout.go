@@ -141,6 +141,10 @@ type Zone struct {
 
 	// If true, this is a place to pay for merchandise.
 	Checkout bool
+
+	// If true, this is a highly specific zone, e.g. an
+	// aisle.
+	Specific bool
 }
 
 // A Portal is a means by which a customer can get from
