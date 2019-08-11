@@ -261,6 +261,7 @@ func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(UserKey).(db.UserID)
 	storeID := r.Context().Value(StoreIDKey).(db.StoreID)
 	store := r.Context().Value(StoreKey).(optishop.Store)
+	force := r.FormValue("force") == "1"
 
 	var data []byte
 	if err := json.Unmarshal([]byte(r.FormValue("data")), &data); err != nil {
@@ -291,6 +292,10 @@ func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	if zone == nil {
 		s.ServeError(w, r, errors.New("could not locate product within store"))
+		return
+	}
+	if !zone.Specific && !force {
+		s.ServeError(w, r, errors.New("the product cannot be specifically located"))
 		return
 	}
 	floor := store.Layout().ZoneFloor(zone)
