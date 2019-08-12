@@ -8,6 +8,11 @@ const ERROR_IMAGE = '<svg xmlns="http://www.w3.org/2000/svg" class="error-image"
     '<path d="M23,18 h4 v15 h-4 z M23,37 h4 v4 h-4 z" fill="black" stroke-width="2" />' +
     '</svg>';
 
+// Incremented for every open popup, and decremented every
+// time a popup is closed.
+// Used to tell if a loader should go out quickly.
+let NUM_OPEN_POPUPS = 0;
+
 class ListingPage {
     constructor() {
         this.addButton = document.getElementById('add-button');
@@ -248,11 +253,14 @@ class AddDialog {
 }
 
 function showPopupDialog(element) {
+    ++NUM_OPEN_POPUPS;
+    
     const background = document.createElement('div');
     background.className = 'overlay';
 
     let keyDownHandler;
     const closePopup = () => {
+        --NUM_OPEN_POPUPS;
         document.body.removeChild(background);
         window.removeEventListener('keydown', keyDownHandler, true);
     };
@@ -328,10 +336,12 @@ function showOverlayLoader() {
     const shownTime = new Date().getTime();
     return () => {
         const elapsed = Math.max(0, new Date().getTime() - shownTime);
-        if (elapsed > MIN_OVERLAY_LOADER_TIME) {
+        if (NUM_OPEN_POPUPS > 0 || elapsed > MIN_OVERLAY_LOADER_TIME) {
             document.body.removeChild(background);
             return;
         }
-        setTimeout(() => document.body.removeChild(background), MIN_OVERLAY_LOADER_TIME - elapsed);
+        setTimeout(() => {
+            document.body.removeChild(background);
+        }, MIN_OVERLAY_LOADER_TIME - elapsed);
     }
 }
