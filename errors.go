@@ -20,6 +20,7 @@ var errorMap = map[string]string{
 	"not authenticated":                                                "You are no longer signed in. Please refresh the page and sign in.",
 	"get store: store not found":                                       "The store could not be found. Did you delete it?",
 	"remove list entry: entry not found":                               "The entry does not exist. Did you delete it?",
+	"the product cannot be specifically located":                       "The product's exact location is unknown.",
 }
 
 // HumanizeError turns an error message into a more

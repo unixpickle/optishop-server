@@ -138,19 +138,20 @@ func (s *Store) Layout() *optishop.Layout {
 
 func (s *Store) Locate(prod optishop.InventoryProduct) (*optishop.Zone, error) {
 	item := prod.(*inventoryProduct).SearchItem
+
+	if loc, err := LocationDetails(item.RepresentativeChildPartNumber, s.StoreID); err == nil {
+		name := strings.Replace(loc.BlockAisle, "-", "", -1)
+		zone := s.CachedLayout.Zone(name)
+		if zone == nil {
+			return nil, errors.New("locate product: aisle " + name + " is missing from the map")
+		}
+		return zone, nil
+	}
+
 	details, err := s.Client.ProductDetails(item.RepresentativeChildPartNumber, s.StoreID)
 	if err != nil {
 		return nil, err
 	}
-	names := []string{
-		strings.Replace(details.Product.Location.BlockAisle, "-", "", -1),
-		strings.ToLower(details.Product.Item.ProductClassification.ProductTypeName),
-	}
-	for _, name := range names {
-		zone := s.CachedLayout.Zone(name)
-		if zone != nil {
-			return zone, nil
-		}
-	}
-	return nil, nil
+	name := strings.ToLower(details.Product.Item.ProductClassification.ProductTypeName)
+	return s.CachedLayout.Zone(name), nil
 }
