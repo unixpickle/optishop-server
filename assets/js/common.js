@@ -28,6 +28,8 @@ class ListingPage {
         }
         this.addDialog.handleLocationChange();
 
+        this.data = [];
+
         this.fetchedData = false;
         this.fetchDataFailed = false;
         this.fetchInitialData();
@@ -68,12 +70,14 @@ class ListingPage {
     }
 
     updateData(items) {
+        this.data = [];
+
         if (items.length === 0) {
             // Empty the list so that if we add a new item
             // with addListItem, old items are not there.
             this.itemList.innerHTML = '';
-            this.itemList.style.display = 'none';
-            this.emptyList.style.display = 'block';
+            this.hideList();
+            this.dataChanged();
             return;
         }
 
@@ -81,11 +85,11 @@ class ListingPage {
         items.forEach((item) => {
             this.addListItem(item);
         });
-        this.itemList.style.display = 'block';
-        this.emptyList.style.display = 'none';
     }
 
     addListItem(item) {
+        this.data.push(item);
+
         const element = this.createListItem(item);
         element.addEventListener('click', () => {
             this.selectedListItem(item);
@@ -102,8 +106,23 @@ class ListingPage {
         this.itemList.appendChild(element);
 
         // Incase the list used to be empty.
+        this.showList();
+
+        this.dataChanged();
+    }
+
+    showList() {
         this.itemList.style.display = 'block';
         this.emptyList.style.display = 'none';
+    }
+
+    hideList() {
+        this.itemList.style.display = 'none';
+        this.emptyList.style.display = 'block';
+    }
+
+    dataChanged() {
+        // Override this in a subclass as needed.
     }
 
     fetchData() {
@@ -254,7 +273,7 @@ class AddDialog {
 
 function showPopupDialog(element) {
     ++NUM_OPEN_POPUPS;
-    
+
     const background = document.createElement('div');
     background.className = 'overlay';
 

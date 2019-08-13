@@ -3,6 +3,7 @@
     class ListPage extends ListingPage {
         constructor() {
             super();
+            this.totalPrice = document.getElementById('total-price');
             this.sortButton = document.getElementById('sort-button');
             this.sortButton.addEventListener('click', () => {
                 const hideLoader = showOverlayLoader();
@@ -37,6 +38,25 @@
                 throw data.error;
             }
             return data;
+        }
+
+        showList() {
+            super.showList();
+            this.totalPrice.style.display = 'block';
+        }
+
+        hideList() {
+            super.hideList();
+            this.totalPrice.style.display = 'none';
+        }
+
+        dataChanged() {
+            let totalPrice = 0;
+            this.data.forEach((item) => {
+                const price = parseFloat(item.price.substr(1));
+                totalPrice += price;
+            })
+            this.totalPrice.textContent = '$' + totalPrice.toFixed(2);
         }
 
         createAddDialog() {

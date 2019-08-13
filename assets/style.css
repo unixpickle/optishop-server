@@ -171,10 +171,18 @@ button, input[type="submit"] {
     background-image: url('svg/route.svg');
 }
 
-.empty-list, .item-list, .list-loader {
+.list-container {
     width: 600px;
     position: absolute;
     left: calc(50% - 300px);
+}
+
+@media screen and (max-width: 620px) {
+    .list-container {
+        width: calc(100% - 20px);
+        position: relative;
+        left: 10px;
+    }
 }
 
 .list-loader {
@@ -202,17 +210,23 @@ button, input[type="submit"] {
     padding: 20px 10px;
 }
 
-.item-list li, .empty-list, .list-loader {
-    background-color: white;
-    box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.4);
+.total-price {
+    margin: 20px auto 20px auto;
+    display: none;
+    text-align: center;
+    box-sizing: border-box;
+    padding: 20px 10px;
+    color: #007700;
 }
 
-@media screen and (max-width: 620px) {
-    .empty-list, .item-list, .list-loader {
-        width: calc(100% - 20px);
-        position: relative;
-        left: 10px;
-    }
+.total-price::before {
+    content: 'Total Price: ';
+    font-weight: bolder;
+}
+
+.item-list li, .empty-list, .list-loader, .total-price {
+    background-color: white;
+    box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.4);
 }
 
 .item-list li {
@@ -612,7 +626,7 @@ button, input[type="submit"] {
     float: left;
 }
 
-body.doing-search .item-list, body.doing-search .empty-list {
+body.doing-search .item-list, body.doing-search .empty-list, body.doing-search .total-price {
     /* Prevent page from scrolling while adding */
     display: none !important;
 }
