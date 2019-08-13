@@ -83,7 +83,7 @@ func (c *Client) SearchStores(query string) ([]*LocationInfo, error) {
 		return nil, errors.Wrap(err, "search stores")
 	}
 	if len(strings.TrimSpace(string(data))) == 0 {
-		return nil, err
+		return nil, nil
 	}
 	var response []struct {
 		Locations []*LocationInfo `json:"locations"`

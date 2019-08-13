@@ -91,6 +91,9 @@ func (c *Client) Search(query, storeID string, offset int) (*SearchResults, erro
 	var res struct {
 		Results SearchResults `json:"search_response"`
 	}
+	if len(strings.TrimSpace(string(data))) == 0 {
+		return &res.Results, nil
+	}
 	if err := json.Unmarshal(data, &res); err != nil {
 		return nil, errors.Wrap(err, "search")
 	}
