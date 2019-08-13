@@ -94,5 +94,5 @@ func (c *Client) Search(query, storeID string, offset int) (*SearchResults, erro
 	if err := json.Unmarshal(data, &res); err != nil {
 		return nil, errors.Wrap(err, "search")
 	}
-	return res.Results, nil
+	return &res.Results, nil
 }
