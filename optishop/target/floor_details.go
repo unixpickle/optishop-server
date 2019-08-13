@@ -52,25 +52,17 @@ func parseFloorDetails(data []byte) (*FloorDetails, error) {
 
 	result := &FloorDetails{Aisles: map[string]optishop.Point{}}
 
-	wallShapes, ok := scrape.Find(parsed, scrape.ById("Wall-Shapes"))
-	if !ok {
-		return nil, errors.New("missing 'Wall-Shapes' group")
-	}
-	paths := findTag(wallShapes, "path")
-	if len(paths) == 0 {
-		return nil, errors.New("missing wall shapes")
-	}
 	// Sometimes there are multiple wall shapes, but in
 	// these cases all but one of the shapes tend to just
 	// be a useless tiny rectangle.
 	// See e.g. https://www.target.com/sl/mays-landing/1109.
-	bounds, err := rawPathPolygons(largestPath(paths), transform)
+	polys, err := pathPolygons(parsed, "Wall-Shapes", transform)
 	if err != nil {
 		return nil, err
-	} else if len(bounds) != 1 {
+	} else if len(polys) == 0 {
 		return nil, errors.New("invalid bounding shape")
 	}
-	result.Bounds = bounds[0]
+	result.Bounds = largestPath(polys)
 
 	result.Obstacles, err = pathPolygons(parsed, "Aisle-Shapes", transform)
 	if err != nil {
@@ -112,14 +104,14 @@ func findTag(elem *html.Node, tag string) []*html.Node {
 	})
 }
 
-func largestPath(elems []*html.Node) *html.Node {
-	if len(elems) == 0 {
+func largestPath(paths []optishop.Polygon) optishop.Polygon {
+	if len(paths) == 0 {
 		return nil
 	}
-	res := elems[0]
-	for _, e := range elems[1:] {
-		if len(scrape.Attr(e, "d")) > len(scrape.Attr(res, "d")) {
-			res = e
+	res := paths[0]
+	for _, p := range paths[1:] {
+		if len(p) > len(res) {
+			res = p
 		}
 	}
 	return res
