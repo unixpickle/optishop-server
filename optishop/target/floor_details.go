@@ -64,10 +64,13 @@ func parseFloorDetails(data []byte) (*FloorDetails, error) {
 	// these cases all but one of the shapes tend to just
 	// be a useless tiny rectangle.
 	// See e.g. https://www.target.com/sl/mays-landing/1109.
-	result.Bounds, err = pathPolygon(largestPath(paths), transform)
+	bounds, err := rawPathPolygons(largestPath(paths), transform)
 	if err != nil {
 		return nil, err
+	} else if len(bounds) != 1 {
+		return nil, errors.New("invalid bounding shape")
 	}
+	result.Bounds = bounds[0]
 
 	result.Obstacles, err = pathPolygons(parsed, "Aisle-Shapes", transform)
 	if err != nil {
@@ -159,44 +162,51 @@ func pathPolygons(container *html.Node, id string, c *coordTransform) ([]optisho
 	}
 	var res []optishop.Polygon
 	for _, path := range findTag(elem, "path") {
-		poly, err := pathPolygon(path, c)
+		polys, err := rawPathPolygons(path, c)
 		if err != nil {
 			return nil, err
 		}
-		res = append(res, poly)
+		res = append(res, polys...)
 	}
 	return res, nil
 }
 
-func pathPolygon(elem *html.Node, c *coordTransform) (optishop.Polygon, error) {
-	polygon := optishop.Polygon{}
+func rawPathPolygons(elem *html.Node, c *coordTransform) ([]optishop.Polygon, error) {
 	data := scrape.Attr(elem, "d")
-	fields := strings.Fields(data)
-	if len(fields) == 0 {
-		return nil, errors.New("empty path")
-	}
-	if len(fields)%2 != 1 || fields[len(fields)-1] != "Z" {
-		return nil, errors.New("expected even # of fields followed by Z")
-	}
-	for i := 0; i < len(fields)-2; i += 2 {
-		cmd1 := fields[i]
-		cmd2 := fields[i+1]
-		if i == 0 {
-			if !strings.HasPrefix(cmd1, "M") {
-				return nil, errors.New("expected move command")
+	var results []optishop.Polygon
+	for _, shape := range strings.Split(data, "Z") {
+		if shape == "" {
+			continue
+		}
+		polygon := optishop.Polygon{}
+		fields := strings.Fields(shape)
+		if len(fields) == 0 {
+			return nil, errors.New("empty path")
+		}
+		if len(fields)%2 != 0 {
+			return nil, errors.New("expected even # of fields followed by Z")
+		}
+		for i := 0; i < len(fields)-2; i += 2 {
+			cmd1 := fields[i]
+			cmd2 := fields[i+1]
+			if i == 0 {
+				if !strings.HasPrefix(cmd1, "M") {
+					return nil, errors.New("expected move command")
+				}
+			} else if !strings.HasPrefix(cmd1, "L") {
+				return nil, errors.New("expected line command")
 			}
-		} else if !strings.HasPrefix(cmd1, "L") {
-			return nil, errors.New("expected line command")
+			val1, err := strconv.ParseFloat(cmd1[1:], 64)
+			if err != nil {
+				return nil, err
+			}
+			val2, err := strconv.ParseFloat(cmd2, 64)
+			if err != nil {
+				return nil, err
+			}
+			polygon = append(polygon, c.Apply(optishop.Point{X: val1, Y: val2}))
 		}
-		val1, err := strconv.ParseFloat(cmd1[1:], 64)
-		if err != nil {
-			return nil, err
-		}
-		val2, err := strconv.ParseFloat(cmd2, 64)
-		if err != nil {
-			return nil, err
-		}
-		polygon = append(polygon, c.Apply(optishop.Point{X: val1, Y: val2}))
+		results = append(results, polygon)
 	}
-	return polygon, nil
+	return results, nil
 }
