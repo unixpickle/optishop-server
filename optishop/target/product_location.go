@@ -60,14 +60,14 @@ func LocationDetails(tcin, storeID string) (*InStoreLocation, error) {
 
 	var result struct {
 		Product struct {
-			InStoreLocation *InStoreLocation `json:"in_store_location"`
+			InStoreLocation InStoreLocation `json:"in_store_location"`
 		} `json:"product"`
 	}
 	if err := json.Unmarshal(data, &result); err != nil {
 		return nil, errors.Wrap(err, "location details")
 	}
-	if result.Product.InStoreLocation == nil {
+	if result.Product.InStoreLocation.BlockAisle == "" {
 		return nil, errors.New("location details: missing location in result")
 	}
-	return result.Product.InStoreLocation, nil
+	return &result.Product.InStoreLocation, nil
 }
