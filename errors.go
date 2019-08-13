@@ -38,6 +38,7 @@ func ServeFormError(w http.ResponseWriter, r *http.Request, err error) {
 	path := r.URL.Path
 	http.Redirect(w, r, path+"?error="+url.QueryEscape(HumanizeError(err).Error()),
 		http.StatusSeeOther)
+	LogRequest(r, "serving form error: %s", err.Error())
 }
 
 // ServeError serves errors for API and page requests.
@@ -48,6 +49,7 @@ func ServeFormError(w http.ResponseWriter, r *http.Request, err error) {
 // ServeFormError should be used instead.
 func (s *Server) ServeError(w http.ResponseWriter, r *http.Request, err error) {
 	message := HumanizeError(err).Error()
+	LogRequest(r, "serving error: %s", message)
 
 	if IsAPIRequest(r) {
 		obj := map[string]string{"error": message}

@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"path"
 	"strings"
@@ -78,4 +80,15 @@ func shouldPreventCaching(r *http.Request) bool {
 		"/signup": true,
 	}
 	return IsAPIRequest(r) || pages[r.URL.Path]
+}
+
+func LogRequest(r *http.Request, format string, args ...interface{}) {
+	prefix := r.URL.Path + ": "
+	if user := r.Context().Value(UserKey); user != nil {
+		prefix += fmt.Sprintf("%s: ", user)
+	}
+	if storeID := r.Context().Value(StoreIDKey); storeID != nil {
+		prefix += fmt.Sprintf("%s: ", storeID)
+	}
+	log.Printf(prefix+format, args...)
 }

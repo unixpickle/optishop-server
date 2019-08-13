@@ -109,10 +109,13 @@ func (s *Server) HandleList(w http.ResponseWriter, r *http.Request) {
 
 	pageData = bytes.Replace(pageData, []byte("INSERT_STORE_DATA_HERE"), storeData, 1)
 	w.Write(pageData)
+
+	LogRequest(r, "serving list for store: %s/%s", storeDesc.Source, storeDesc.Name)
 }
 
 func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
+		LogRequest(r, "serving static login page")
 		http.ServeFile(w, r, filepath.Join(s.AssetDir, "login.html"))
 		return
 	}
@@ -129,6 +132,8 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	SetAuthCookie(w, userID, secret)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+
+	LogRequest(r, "successful login: %s", userID)
 }
 
 func (s *Server) HandleLogout(w http.ResponseWriter, r *http.Request) {
@@ -138,6 +143,7 @@ func (s *Server) HandleLogout(w http.ResponseWriter, r *http.Request) {
 		Expires: time.Now().Add(time.Second),
 	})
 	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	LogRequest(r, "logout")
 }
 
 func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
@@ -197,6 +203,8 @@ func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
 
 	page := bytes.Replace(pageData, []byte("INSERT_IMAGE_HERE"), data, 1)
 	w.Write(page)
+
+	LogRequest(r, "planned route for %d entries", len(entries))
 }
 
 func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
@@ -233,6 +241,8 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 
 	SetAuthCookie(w, userID, secret)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+
+	LogRequest(r, "successful signup: %s", userID)
 }
 
 func (s *Server) HandleStores(w http.ResponseWriter, r *http.Request) {
@@ -256,6 +266,8 @@ func (s *Server) HandleStores(w http.ResponseWriter, r *http.Request) {
 
 	pageData = bytes.Replace(pageData, []byte("INSERT_USERNAME"), usernameData, 1)
 	w.Write(pageData)
+
+	LogRequest(r, "served store page")
 }
 
 func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
@@ -311,6 +323,8 @@ func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	LogRequest(r, "added item: %s", product.Name())
+
 	s.HandleListAPI(w, r)
 }
 
@@ -365,7 +379,10 @@ func (s *Server) HandleAddStoreAPI(w http.ResponseWriter, r *http.Request) {
 		s.ServeError(w, r, err)
 		return
 	}
+
 	ServeObject(w, r, storeID)
+
+	LogRequest(r, "added store: %s", store.Name())
 }
 
 func (s *Server) HandleChpassAPI(w http.ResponseWriter, r *http.Request) {
@@ -387,6 +404,8 @@ func (s *Server) HandleChpassAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	SetAuthCookie(w, user, secret)
 	ServeObject(w, r, map[string]string{})
+
+	LogRequest(r, "changed password")
 }
 
 func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request) {
@@ -400,7 +419,8 @@ func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	rawResults, err := store.Search(r.FormValue("query"))
+	query := r.FormValue("query")
+	rawResults, err := store.Search(query)
 	if err != nil {
 		s.ServeError(w, r, err)
 		return
@@ -421,6 +441,8 @@ func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request)
 	}
 
 	ServeObject(w, r, results)
+
+	LogRequest(r, "performed inventory query: %s", query)
 }
 
 func (s *Server) HandleListAPI(w http.ResponseWriter, r *http.Request) {
@@ -430,6 +452,7 @@ func (s *Server) HandleListAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ServeObject(w, r, items)
+	LogRequest(r, "serving list of %d items", len(items))
 }
 
 func (s *Server) getClientListItems(r *http.Request) ([]*ClientListItem, error) {
@@ -467,6 +490,7 @@ func (s *Server) HandleRemoveItemAPI(w http.ResponseWriter, r *http.Request) {
 		s.ServeError(w, r, err)
 		return
 	}
+	LogRequest(r, "removed item: %s", item)
 	s.HandleListAPI(w, r)
 }
 
@@ -477,6 +501,7 @@ func (s *Server) HandleRemoveStoreAPI(w http.ResponseWriter, r *http.Request) {
 		s.ServeError(w, r, err)
 		return
 	}
+	LogRequest(r, "removed store: %s", store)
 	s.HandleStoresAPI(w, r)
 }
 
@@ -505,6 +530,8 @@ func (s *Server) HandleSortAPI(w http.ResponseWriter, r *http.Request) {
 		s.ServeError(w, r, err)
 		return
 	}
+
+	LogRequest(r, "sorted %d entries", len(entries))
 
 	s.HandleListAPI(w, r)
 }
@@ -544,6 +571,8 @@ func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ServeObject(w, r, responses)
+
+	LogRequest(r, "performed store query: %s", query)
 }
 
 func (s *Server) HandleStoresAPI(w http.ResponseWriter, r *http.Request) {
@@ -553,6 +582,7 @@ func (s *Server) HandleStoresAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ServeObject(w, r, clientStores)
+	LogRequest(r, "served list with %d stores", len(clientStores))
 }
 
 func (s *Server) getClientStores(r *http.Request) ([]*ClientStoreDesc, error) {
