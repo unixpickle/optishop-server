@@ -125,6 +125,7 @@ func (s *Server) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	secret, err := s.DB.UserMetadata(userID, SecretKey)
 	if err != nil {
 		s.ServeError(w, r, err)
+		return
 	}
 	SetAuthCookie(w, userID, secret)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
