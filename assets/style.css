@@ -275,6 +275,8 @@ button, input[type="submit"] {
 .list-item .location {
     bottom: 12px;
     font-style: oblique;
+    max-height: 40px;
+    overflow: hidden;
 }
 
 .item-list .list-item label {
@@ -624,6 +626,11 @@ button, input[type="submit"] {
     margin: 5px 0 0 10px;
     line-height: 30px;
     float: left;
+
+    max-width: calc(100% - 80px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 body.doing-search .item-list, body.doing-search .empty-list, body.doing-search .total-price {
