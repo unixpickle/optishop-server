@@ -10,13 +10,13 @@
         <script src="js/stores.js"></script>
     </head>
     <body>
-        <nav class="home-header" id="home-header">
+        <nav class="stores-header" id="stores-header">
             <label class="name"></label>
             <a href="/logout" class="logout">Logout</a>
         </nav>
         <script type="text/javascript">
             (function() {
-                const header = document.getElementById('home-header');
+                const header = document.getElementById('stores-header');
                 const name = header.getElementsByClassName('name')[0];
                 name.textContent = 'Welcome, ' + INSERT_USERNAME;
             })();

@@ -71,9 +71,13 @@ type Server struct {
 
 func (s *Server) HandleGeneral(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/" || r.URL.Path == "" {
-		// Hack for the stores page, since it always gets
-		// clumped in with the other asset requests.
-		s.AuthHandler(s.HandleStores)(w, r)
+		s.OptionalAuthHandler(func(w http.ResponseWriter, r *http.Request) {
+			if r.Context().Value(UserKey) != nil {
+				s.HandleStores(w, r)
+			} else {
+				http.ServeFile(w, r, filepath.Join(s.AssetDir, "home.html"))
+			}
+		})(w, r)
 	} else {
 		http.FileServer(http.Dir(s.AssetDir)).ServeHTTP(w, r)
 	}
@@ -142,7 +146,7 @@ func (s *Server) HandleLogout(w http.ResponseWriter, r *http.Request) {
 		Value:   "",
 		Expires: time.Now().Add(time.Second),
 	})
-	http.Redirect(w, r, "/login", http.StatusSeeOther)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 	LogRequest(r, "logout")
 }
 

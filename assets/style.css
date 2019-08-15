@@ -570,7 +570,7 @@ button, input[type="submit"] {
     background-color: #459cb4;
 }
 
-.store-header, .home-header {
+.store-header, .stores-header, .home-header {
     position: relative;
     top: 0;
     left: 0;
@@ -597,11 +597,16 @@ button, input[type="submit"] {
 
 .store-header .logo {
     margin: 5px 5px 0 5px;
-    margin-top: 5px;
     width: 30px;
     height: 30px;
     float: right;
-    margin-right: 5px;
+}
+
+.home-header .logo {
+    margin: 5px 0 5px 5px;
+    width: 30px;
+    height: 30px;
+    float: left;
 }
 
 .store-header .name {
@@ -610,7 +615,7 @@ button, input[type="submit"] {
     float: right;
 }
 
-.home-header .logout {
+.stores-header .logout, .home-header .login {
     margin: 5px 10px 0 0;
     line-height: 30px;
     float: right;
@@ -618,12 +623,12 @@ button, input[type="submit"] {
     color: #65bcd4;
 }
 
-.home-header .logout:hover {
+.stores-header .logout:hover, .home-header .login:hover {
     color: #459cb4;
 }
 
-.home-header .name {
-    margin: 5px 0 0 10px;
+.stores-header .name, .home-header .greeting {
+    margin-top: 5px;
     line-height: 30px;
     float: left;
 
@@ -633,7 +638,58 @@ button, input[type="submit"] {
     white-space: nowrap;
 }
 
+.stores-header .name {
+    margin-left: 10px;
+}
+
+.home-header .greeting {
+    margin-left: 5px;
+}
+
 body.doing-search .item-list, body.doing-search .empty-list, body.doing-search .total-price {
     /* Prevent page from scrolling while adding */
     display: none !important;
+}
+
+.home-pane {
+    box-sizing: border-box;
+    padding: 15px;
+    width: 600px;
+    margin: 20px auto;
+    background-color: white;
+    box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.4);
+}
+
+@media screen and (max-width: 620px) {
+    .home-pane {
+        width: calc(100% - 20px);
+    }
+}
+
+.home-pane > h1 {
+    margin: 0;
+    padding: 0;
+    font-size: 20px;
+    color: #555;
+}
+
+.home-pane > p {
+    padding: 0;
+    margin: 10px 0;
+    color: #555;
+}
+
+.home-pane a {
+    text-decoration: none;
+    color: #65bcd4;
+}
+
+.home-pane a:hover {
+    color: #459cb4;
+}
+
+.home-pane > img {
+    box-sizing: border-box;
+    width: 100%;
+    border: 1px solid #d5d5d5;
 }

@@ -63,6 +63,19 @@ func (s *Server) AuthHandler(f http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+// OptionalAuthHandler is like AuthHandler, but it always
+// hands requests to f. If the user is not authenticated,
+// then there is simply no UserKey in the context.
+func (s *Server) OptionalAuthHandler(f http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if user, ok := checkAuth(s.DB, r); ok {
+			f(w, r.WithContext(context.WithValue(r.Context(), UserKey, user)))
+		} else {
+			f(w, r)
+		}
+	}
+}
+
 func checkAuth(d db.DB, r *http.Request) (db.UserID, bool) {
 	cookie, err := r.Cookie("session")
 	if err != nil {
