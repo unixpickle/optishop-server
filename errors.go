@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"regexp"
 
 	"github.com/pkg/errors"
 )
@@ -23,11 +24,21 @@ var errorMap = map[string]string{
 	"the product cannot be specifically located":                       "The product's exact location is unknown.",
 }
 
+var errorRegexes = map[*regexp.Regexp]string{
+	regexp.MustCompile("^locate product: aisle (.*) is missing from the map$"): "The product is located at aisle $1, but $1 is missing from the map.",
+}
+
 // HumanizeError turns an error message into a more
 // user-friendly message.
 func HumanizeError(err error) error {
-	if str, ok := errorMap[err.Error()]; ok {
+	msg := err.Error()
+	if str, ok := errorMap[msg]; ok {
 		return errors.New(str)
+	}
+	for expr, replacement := range errorRegexes {
+		if expr.MatchString(msg) {
+			return errors.New(expr.ReplaceAllString(msg, replacement))
+		}
 	}
 	return err
 }
