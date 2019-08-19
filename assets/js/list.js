@@ -52,11 +52,19 @@
 
         dataChanged() {
             let totalPrice = 0;
+            let notCorrect = false;
             this.data.forEach((item) => {
                 const price = parseFloat(item.price.substr(1));
-                totalPrice += price;
+                if (!isNaN(price)) {
+                    totalPrice += price;
+                } else {
+                    notCorrect = true;
+                }
             })
             this.totalPrice.textContent = '$' + totalPrice.toFixed(2);
+            if (notCorrect) {
+                this.totalPrice.textContent += ' (missing items)';
+            }
         }
 
         createAddDialog() {
