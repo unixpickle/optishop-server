@@ -270,6 +270,11 @@ button, input[type="submit"] {
     font-weight: bolder;
     max-height: 40px;
     overflow: hidden;
+
+    display: -webkit-box;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
 }
 
 .list-item .location {
