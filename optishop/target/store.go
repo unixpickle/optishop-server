@@ -2,6 +2,7 @@ package target
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -53,7 +54,12 @@ func (i *inventoryProduct) InStock() bool {
 }
 
 func (i *inventoryProduct) Price() string {
-	return i.SearchItem.Price.FormattedCurrentPrice
+	p := i.SearchItem.Price
+	if strings.HasPrefix(p.FormattedCurrentPrice, "$") {
+		return p.FormattedCurrentPrice
+	} else {
+		return fmt.Sprintf("$%0.2f", p.CurrentRetail)
+	}
 }
 
 type Store struct {

@@ -54,7 +54,10 @@
             let totalPrice = 0;
             let notCorrect = false;
             this.data.forEach((item) => {
-                const price = parseFloat(item.price.substr(1));
+                // Price strings are either dollar amounts (e.g. "$150.00") or
+                // ranges (e.g. "$99.99 - $149.99").
+                // In the later case, we use the upper bound.
+                const price = parseFloat(item.price.split(' ').pop().substr(1));
                 if (!isNaN(price)) {
                     totalPrice += price;
                 } else {
