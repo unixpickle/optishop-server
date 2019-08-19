@@ -262,7 +262,7 @@ button, input[type="submit"] {
     display: block;
     position: absolute;
     left: 95px;
-    width: calc(100% - 95px);
+    width: calc(100% - 105px);
 }
 
 .list-item .name {
