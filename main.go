@@ -51,6 +51,7 @@ func main() {
 	http.HandleFunc("/api/inventoryquery",
 		server.AuthHandler(server.StoreHandler(server.HandleInventoryQueryAPI)))
 	http.HandleFunc("/api/list", server.AuthHandler(server.StoreHandler(server.HandleListAPI)))
+	http.HandleFunc("/api/map", server.AuthHandler(server.StoreHandler(server.HandleMapAPI)))
 	http.HandleFunc("/api/removeitem",
 		server.AuthHandler(server.StoreHandler(server.HandleRemoveItemAPI)))
 	http.HandleFunc("/api/removestore", server.AuthHandler(server.HandleRemoveStoreAPI))
@@ -303,17 +304,23 @@ func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var zone *optishop.Zone
+	zone := store.Layout().Zone(zoneName)
 	if zoneName == "" {
 		zone, err = store.Locate(product)
 		if err != nil {
-			s.ServeError(w, r, err)
+			ServeObject(w, r, map[string]interface{}{
+				"error":  HumanizeError(err).Error(),
+				"noZone": true,
+			})
 			return
 		}
-	} else {
-		zone = store.Layout().Zone(zoneName)
+		if zone != nil && !zone.Specific {
+			// If we only know a department, we should
+			// make the user pick a more specific spot.
+			zone = nil
+		}
 	}
-	if zone == nil || !zone.Specific {
+	if zone == nil {
 		ServeObject(w, r, map[string]interface{}{
 			"error":  "The product's location is unknown.",
 			"noZone": true,
@@ -489,6 +496,28 @@ func (s *Server) getClientListItems(r *http.Request) ([]*ClientListItem, error) 
 	}
 
 	return results, nil
+}
+
+func (s *Server) HandleMapAPI(w http.ResponseWriter, r *http.Request) {
+	store := r.Context().Value(StoreKey).(optishop.Store)
+
+	var imageData bytes.Buffer
+	canvas := svg.New(&imageData)
+
+	width, height, _ := visualize.MultiFloorGeometry(store.Layout())
+	canvas.Start(width, height, fmt.Sprintf("viewBox=\"0 0 %f %f\"", width, height))
+	visualize.DrawFloors(canvas, store.Layout())
+	canvas.End()
+
+	// Remove the width/height attributes so that the SVG
+	// has a dynamic size.
+	expr := regexp.MustCompile(`<svg width="[0-9\.]*" height="[0-9\.]*"`)
+	data := expr.ReplaceAll(imageData.Bytes(), []byte("<svg"))
+
+	w.Header().Set("content-type", "image/svg+xml")
+	w.Write(data)
+
+	LogRequest(r, "served map")
 }
 
 func (s *Server) HandleRemoveItemAPI(w http.ResponseWriter, r *http.Request) {

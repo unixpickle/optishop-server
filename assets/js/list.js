@@ -83,9 +83,16 @@
         }
 
         async addItem(item) {
-            const formData = 'store=' + encodeURIComponent(currentStore()) +
+            await this.addItemWithZone(item, null);
+        }
+
+        async addItemWithZone(item, zoneName) {
+            let formData = 'store=' + encodeURIComponent(currentStore()) +
                 '&signature=' + encodeURIComponent(item.signature) +
                 '&data=' + encodeURIComponent(JSON.stringify(item.data));
+            if (zoneName !== null) {
+                formData += '&zone=' + encodeURIComponent(zoneName);
+            }
             const response = await fetch('/api/additem', {
                 method: 'POST',
                 credentials: 'same-origin',
@@ -96,6 +103,15 @@
                 cache: 'no-store',
             });
             const data = await response.json();
+            if (data.noZone && zoneName === null) {
+                await this.addDialog.locationPicker.open(data.error, (zoneName) => {
+                    const hideLoader = showOverlayLoader();
+                    this.addItemWithZone(item, zoneName)
+                        .catch(handleError)
+                        .finally(hideLoader);
+                });
+                return;
+            }
             if (data.error) {
                 throw data.error;
             }
@@ -119,6 +135,11 @@
     }
 
     class AddProductDialog extends AddDialog {
+        constructor() {
+            super();
+            this.locationPicker = new LocationPicker();
+        }
+
         async fetchSearchResults(query) {
             const queryStr = '?store=' + encodeURIComponent(currentStore()) +
                 '&query=' + encodeURIComponent(query);
@@ -135,6 +156,92 @@
 
         createListItem(item) {
             return createListItem(item);
+        }
+
+        reset() {
+            super.reset();
+            this.locationPicker.close();
+        }
+    }
+
+    class LocationPicker {
+        constructor() {
+            this.element = document.getElementById('location-picker');
+            this.errorMessage = document.getElementById('location-picker-error');
+            this.cancelButton = document.getElementById('location-picker-cancel');
+            this.mapContainer = document.getElementById('location-picker-map');
+            this.textLabels = [];
+
+            this.cancelButton.addEventListener('click', () => this.close());
+        }
+
+        async open(errorMessage, onChosen) {
+            const queryStr = '?store=' + encodeURIComponent(currentStore());
+            const response = await fetch('/api/map' + queryStr, {
+                credentials: 'same-origin',
+                cache: 'no-store',
+            });
+            const svgData = await response.text();
+            this.errorMessage.textContent = errorMessage;
+            this.mapContainer.innerHTML = svgData;
+            this.element.style.display = 'block';
+
+            this.findTextElements();
+            this.registerMouseEvents(onChosen);
+        }
+
+        close() {
+            this.element.style.display = 'none';
+        }
+
+        findTextElements() {
+            const svgElement = this.mapContainer.getElementsByTagName('svg')[0];
+            const texts = svgElement.getElementsByTagName('text');
+            const counts = {};
+            for (let i = 0; i < texts.length; ++i) {
+                const text = texts[i].textContent;
+                counts[text] = (counts[text] || 0) + 1;
+            }
+            this.textLabels = [];
+            for (let i = 0; i < texts.length; ++i) {
+                const text = texts[i].textContent;
+                // Only find unique zone names.
+                if (counts[text] === 1) {
+                    this.textLabels.push(texts[i]);
+                }
+            }
+        }
+
+        registerMouseEvents(onChosen) {
+            const svgElement = this.mapContainer.getElementsByTagName('svg')[0];
+            const labelForEvent = (e) => {
+                const x = e.clientX;
+                const y = e.clientY;
+
+                let closestDist = Infinity;
+                let closest = this.textLabels[0];
+                this.textLabels.forEach((label) => {
+                    const rect1 = label.getBoundingClientRect();
+                    const distance = Math.pow(rect1.left + rect1.width / 2 - x, 2) +
+                        Math.pow(rect1.top + rect1.height / 2 - y, 2);
+                    if (distance < closestDist) {
+                        closestDist = distance;
+                        closest = label;
+                    }
+                });
+                return closest;
+            };
+            let oldClosest = null;
+            svgElement.addEventListener('mousemove', (e) => {
+                if (oldClosest) {
+                    oldClosest.style.fill = 'black';
+                }
+                oldClosest = labelForEvent(e);
+                oldClosest.style.fill = 'blue';
+            });
+            svgElement.addEventListener('click', (e) => {
+                onChosen(labelForEvent(e).textContent);
+            });
         }
     }
 
