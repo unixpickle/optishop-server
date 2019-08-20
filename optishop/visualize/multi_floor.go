@@ -12,9 +12,13 @@ import (
 // are with respect to the size of the layout.
 const MarginFrac = 0.1
 
-// FontSizeFrac contrlos how big the aisle labels are with
-// respect to the size of the layout.
+// FontSizeFrac controls how big the department labels are
+// with respect to the size of the layout.
 const FontSizeFrac = 1.0 / 150.0
+
+// SpecificLabelSizeFrac controls how big the aisle labels are with
+// respect to the size of the department labels.
+const SpecificLabelSizeFrac = 0.5
 
 // PathFrac controls how thick paths are with respect to
 // the size of the layout.

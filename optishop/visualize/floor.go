@@ -48,8 +48,12 @@ func DrawFloorLabels(canvas *svg.SVG, floor *optishop.Floor, xOff, yOff, fontSiz
 
 // DrawZoneLabels draws the labels for specified zones.
 func DrawZoneLabels(canvas *svg.SVG, zones []*optishop.Zone, xOff, yOff, fontSize float64) {
-	sizeStr := fmt.Sprintf("%.3fpx", fontSize)
 	for _, zone := range zones {
+		fs := fontSize
+		if zone.Specific {
+			fs *= SpecificLabelSizeFrac
+		}
+		sizeStr := fmt.Sprintf("%.3fpx", fs)
 		canvas.Text(zone.Location.X+xOff, zone.Location.Y+yOff, zone.Name,
 			"text-anchor: middle; dominant-baseline: middle; font-size: "+sizeStr)
 	}

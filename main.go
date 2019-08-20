@@ -186,7 +186,7 @@ func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
 	for _, path := range paths {
 		visualize.DrawFloorPath(canvas, store.Layout(), path)
 	}
-	fontSize := width * visualize.FontSizeFrac * 2
+	fontSize := 4 * width * visualize.FontSizeFrac
 	visualize.MultiFloorLoop(store.Layout(), func(f *optishop.Floor, x, y float64) {
 		floorIdx := store.Layout().FloorIndex(f)
 		var zones []*optishop.Zone
