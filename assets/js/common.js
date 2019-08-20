@@ -199,13 +199,17 @@ class AddDialog {
             window.history.pushState({}, window.title, '#add');
         }
         document.body.classList.add('doing-search');
+        this.reset();
+        this.element.style.display = 'block';
+        this.searchBox.focus();
+    }
+
+    reset() {
         this.instanceNum++;
         this.searchBox.value = '';
         this.searchResults.innerHTML = '';
         this.noResults.style.display = 'none';
         this.hideLoader();
-        this.element.style.display = 'block';
-        this.searchBox.focus();
     }
 
     close() {
@@ -235,7 +239,6 @@ class AddDialog {
                 elem.addEventListener('click', () => {
                     const hideLoader = showOverlayLoader();
                     this.onAdd(item)
-                        .then(() => this.close())
                         .catch(handleError)
                         .finally(hideLoader);
                 });

@@ -44,6 +44,7 @@
             }
             store.id = data;
             this.addListItem(store);
+            this.addDialog.close();
         }
 
         async deleteItem(store) {

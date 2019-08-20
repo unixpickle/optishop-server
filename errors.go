@@ -13,7 +13,6 @@ import (
 
 var errorMap = map[string]string{
 	"get store: create store: get map info: store does not have a map": "There is no digital map available for this store. Try choosing a different store.",
-	"could not locate product within store":                            "This product has no listed aisle or department section. Try choosing a different, similar product.",
 	"check login: password incorrect":                                  "The password you entered is incorrect.",
 	"check login: user does not exist":                                 "The username you entered does not exist.",
 	"create user: user already exists":                                 "That username is already in use.",
@@ -21,7 +20,7 @@ var errorMap = map[string]string{
 	"not authenticated":                                                "You are no longer signed in. Please refresh the page and sign in.",
 	"get store: store not found":                                       "The store could not be found. Did you delete it?",
 	"remove list entry: entry not found":                               "The entry does not exist. Did you delete it?",
-	"the product cannot be specifically located":                       "The product's exact location is unknown.",
+	"the specified location does not exist":                            "The specified location does not exist.",
 }
 
 var errorRegexes = map[*regexp.Regexp]string{

@@ -278,7 +278,7 @@ func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(UserKey).(db.UserID)
 	storeID := r.Context().Value(StoreIDKey).(db.StoreID)
 	store := r.Context().Value(StoreKey).(optishop.Store)
-	force := r.FormValue("force") == "1"
+	zoneName := r.FormValue("zone")
 
 	var data []byte
 	if err := json.Unmarshal([]byte(r.FormValue("data")), &data); err != nil {
@@ -302,17 +302,22 @@ func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
 		s.ServeError(w, r, err)
 		return
 	}
-	zone, err := store.Locate(product)
-	if err != nil {
-		s.ServeError(w, r, err)
-		return
+
+	var zone *optishop.Zone
+	if zoneName == "" {
+		zone, err = store.Locate(product)
+		if err != nil {
+			s.ServeError(w, r, err)
+			return
+		}
+	} else {
+		zone = store.Layout().Zone(zoneName)
 	}
-	if zone == nil {
-		s.ServeError(w, r, errors.New("could not locate product within store"))
-		return
-	}
-	if !zone.Specific && !force {
-		s.ServeError(w, r, errors.New("the product cannot be specifically located"))
+	if zone == nil || !zone.Specific {
+		ServeObject(w, r, map[string]interface{}{
+			"error":  "The product's location is unknown.",
+			"noZone": true,
+		})
 		return
 	}
 	floor := store.Layout().ZoneFloor(zone)

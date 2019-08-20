@@ -100,6 +100,7 @@
                 throw data.error;
             }
             this.updateData(data);
+            this.addDialog.close();
         }
 
         async deleteItem(item) {
