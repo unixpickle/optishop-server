@@ -446,6 +446,20 @@ button, input[type="submit"] {
     box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.4);
 }
 
+@media (min-width: 620px) {
+    .location-picker-contents {
+        left: calc(50% - 300px);
+        width: 600px;
+    }
+}
+
+@media (min-height: 820px) {
+    .location-picker-contents {
+        top: calc(50% - 400px);
+        height: 800px;
+    }
+}
+
 .location-picker .header {
     z-index: 1;
     position: absolute;
