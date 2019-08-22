@@ -464,7 +464,7 @@ button, input[type="submit"] {
     z-index: 1;
     position: absolute;
     width: 100%;
-    height: 125px;
+    height: 65px;
     background-color: white;
     box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.4);
 }
@@ -472,7 +472,7 @@ button, input[type="submit"] {
 .location-picker .header .error-message {
     display: block;
     position: absolute;
-    top: 10px;
+    top: 6px;
     left: 10px;
     width: calc(100% - 20px);
     line-height: 25px;
@@ -485,7 +485,7 @@ button, input[type="submit"] {
 .location-picker .header .instructions {
     display: block;
     position: absolute;
-    top: 42px;
+    top: 38px;
     left: 10px;
     width: calc(100% - 20px);
     line-height: 20px;
@@ -496,10 +496,20 @@ button, input[type="submit"] {
     font-weight: bolder;
 }
 
-.location-picker .header .cancel-button {
+.location-picker .footer {
+    z-index: 1;
     position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 60px;
+    background-color: white;
+    box-shadow: 0 0 7px 0 rgba(0, 0, 0, 0.4);
+}
+
+.location-picker .footer .cancel-button {
+    position: absolute;
+    top: 10px;
     left: calc(50% - 50px);
-    bottom: 10px;
     width: 100px;
     height: 40px;
     line-height: 40px;
@@ -510,14 +520,14 @@ button, input[type="submit"] {
     background-color: #65bcd4;
 }
 
-.location-picker .header .cancel-button:hover {
+.location-picker .footer .cancel-button:hover {
     background-color: #459cb4;
 }
 
 .location-picker .map-container {
     background-color: #f0f0f0;
     position: absolute;
-    top: 125px;
+    top: 65px;
     width: 100%;
     height: calc(100% - 125px);
     overflow: auto;
