@@ -151,7 +151,7 @@
             if (result.error) {
                 throw result.error;
             }
-            return result.filter((x) => x.inStock);
+            return result.results.filter((x) => x.inStock);
         }
 
         createListItem(item) {

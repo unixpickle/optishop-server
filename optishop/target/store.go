@@ -96,10 +96,10 @@ func NewStore(storeID string) (*Store, error) {
 	}, nil
 }
 
-func (s *Store) Search(query string) ([]optishop.InventoryProduct, error) {
+func (s *Store) Search(query string) ([]optishop.InventoryProduct, []string, error) {
 	results, err := s.Client.Search(query, s.StoreID, 0)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	ids := make([]string, len(results.Items.SearchItems))
@@ -108,7 +108,7 @@ func (s *Store) Search(query string) ([]optishop.InventoryProduct, error) {
 	}
 	shipMethods, err := ShipMethods(s.StoreID, ids)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	idToShipMethod := map[string]*ShipMethodsResult{}
 	for _, method := range shipMethods {
@@ -123,7 +123,7 @@ func (s *Store) Search(query string) ([]optishop.InventoryProduct, error) {
 		})
 	}
 
-	return products, nil
+	return products, results.Suggestions, nil
 }
 
 func (s *Store) MarshalProduct(prod optishop.InventoryProduct) ([]byte, error) {

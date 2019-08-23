@@ -438,7 +438,7 @@ func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request)
 	}
 
 	query := r.FormValue("query")
-	rawResults, err := store.Search(query)
+	rawResults, suggestions, err := store.Search(query)
 	if err != nil {
 		s.ServeError(w, r, err)
 		return
@@ -458,7 +458,10 @@ func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request)
 		})
 	}
 
-	ServeObject(w, r, results)
+	ServeObject(w, r, map[string]interface{}{
+		"results":     results,
+		"suggestions": suggestions,
+	})
 
 	LogRequest(r, "performed inventory query: %s", query)
 }

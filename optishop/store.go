@@ -9,7 +9,10 @@ type InventoryProduct interface {
 }
 
 type Inventory interface {
-	Search(query string) ([]InventoryProduct, error)
+	// Search looks up inventory products in a store.
+	// It may also return search suggestions, which can be
+	// helpful when no results appear.
+	Search(query string) ([]InventoryProduct, []string, error)
 
 	MarshalProduct(prod InventoryProduct) ([]byte, error)
 	UnmarshalProduct(data []byte) (InventoryProduct, error)
