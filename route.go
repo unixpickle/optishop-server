@@ -22,7 +22,7 @@ func SortEntries(list []*db.ListEntry, store optishop.Store,
 		info.Zone = findExactZone(layout, info.Floor, info.Zone)
 		if info.Zone == nil {
 			return nil, fmt.Errorf("sort entries: invalid zone \"%s\" for list entry %d",
-				info.Zone.Name, i)
+				entry.Info.Zone.Name, i)
 		}
 		newList[i] = &db.ListEntry{
 			ID:   entry.ID,
