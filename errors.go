@@ -24,7 +24,8 @@ var errorMap = map[string]string{
 }
 
 var errorRegexes = map[*regexp.Regexp]string{
-	regexp.MustCompile("^locate product: aisle (.*) is missing from the map$"): "The product is located at aisle $1, but $1 is missing from the map.",
+	regexp.MustCompile("^locate product: aisle (.*) is missing from the map$"):    "The product is located at aisle $1, but $1 is missing from the map.",
+	regexp.MustCompile("^sort entries: invalid zone \"(.*)\" for list entry .*$"): "Your list includes a product at aisle $1, but $1 is missing from the map. Try removing the product and re-adding it.",
 }
 
 // HumanizeError turns an error message into a more
