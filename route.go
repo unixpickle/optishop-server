@@ -121,6 +121,12 @@ func findExactZone(l *optishop.Layout, floor int, zone *optishop.Zone) *optishop
 			return z
 		}
 	}
+	// Fallback on name-only match.
+	for _, z := range l.Floors[floor].Zones {
+		if z.Name == zone.Name {
+			return z
+		}
+	}
 	return nil
 }
 
