@@ -17,6 +17,8 @@ func NewClient() (*Client, error) {
 	preloadMarker := []byte("window.__PRELOADED_STATE__= ")
 	idx := bytes.Index(resp, preloadMarker)
 	jsonPayload := resp[idx+len(preloadMarker):]
+	jsonPayload = bytes.ReplaceAll(jsonPayload, []byte("undefined"), []byte("null"))
+	jsonPayload = bytes.ReplaceAll(jsonPayload, []byte("new Set([])"), []byte("[]"))
 	var state map[string]interface{}
 	if err := json.NewDecoder(bytes.NewReader(jsonPayload)).Decode(&state); err != nil {
 		return nil, err
