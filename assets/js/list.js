@@ -250,33 +250,6 @@
         return params.get('store');
     }
 
-    function createListItem(item) {
-        const elem = document.createElement('li');
-        elem.className = 'list-item';
-
-        const image = document.createElement('img');
-        image.className = 'image';
-        image.src = item.photoUrl;
-        elem.appendChild(image);
-
-        const name = document.createElement('label');
-        name.className = 'name';
-        name.textContent = item.name;
-        elem.appendChild(name);
-
-        const zone = document.createElement('label');
-        zone.className = 'location';
-        if (item.zone) {
-            zone.textContent = item.zone;
-        } else {
-            // For the search screen.
-            zone.textContent = item.price;
-        }
-        elem.appendChild(zone);
-
-        return elem;
-    }
-
     function showProductInfo(info) {
         const container = document.createElement('div');
         container.className = 'product-popup';

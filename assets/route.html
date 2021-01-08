@@ -4,22 +4,22 @@
         <title>Optishop</title>
         <meta charset="utf-8">
         <link rel="shortcut icon" href="/favicon.ico" />
-        <style type="text/css">
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #f0f0f0;
-        }
-
-        #route-image, svg {
-            height: 100%;
-            width: 100%;
-        }
-        </style>
+        <link rel="stylesheet" type="text/css" href="style.css">
+        <link rel="stylesheet" type="text/css" href="route.css">
+        <script type="text/javascript">
+            const LIST_DATA = INSERT_LIST_HERE;
+        </script>
+        <script src="js/common.js"></script>
+        <script src="js/route.js"></script>
     </head>
     <body>
+        <div id="top-nav">
+            <div id="top-item">
+                <button id="prev-button" class="page-button">Previous</button>
+                <div id="current-list-item"></div>
+                <button id="next-button" class="page-button">Next</button>
+            </div>
+        </div>
         <div id="route-image">
             INSERT_IMAGE_HERE
         </div>

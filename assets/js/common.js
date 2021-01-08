@@ -367,3 +367,30 @@ function showOverlayLoader() {
         }, MIN_OVERLAY_LOADER_TIME - elapsed);
     }
 }
+
+function createListItem(item, tagName) {
+    const elem = document.createElement(tagName || 'li');
+    elem.className = 'list-item';
+
+    const image = document.createElement('img');
+    image.className = 'image';
+    image.src = item.photoUrl;
+    elem.appendChild(image);
+
+    const name = document.createElement('label');
+    name.className = 'name';
+    name.textContent = item.name;
+    elem.appendChild(name);
+
+    const zone = document.createElement('label');
+    zone.className = 'location';
+    if (item.zone) {
+        zone.textContent = item.zone;
+    } else {
+        // For the search screen.
+        zone.textContent = item.price;
+    }
+    elem.appendChild(zone);
+
+    return elem;
+}

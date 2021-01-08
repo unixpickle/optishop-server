@@ -11,7 +11,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/ajstarks/svgo/float"
+	svg "github.com/ajstarks/svgo/float"
 	"github.com/unixpickle/optishop-server/optishop/visualize"
 
 	"github.com/pkg/errors"
@@ -174,6 +174,11 @@ func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
 		s.ServeError(w, r, err)
 		return
 	}
+	clientList, err := listEntriesToClientListItems(store, sorted)
+	if err != nil {
+		s.ServeError(w, r, err)
+		return
+	}
 
 	var imageData bytes.Buffer
 	canvas := svg.New(&imageData)
@@ -208,8 +213,11 @@ func (s *Server) HandleRoute(w http.ResponseWriter, r *http.Request) {
 	expr := regexp.MustCompile(`<svg width="[0-9\.]*" height="[0-9\.]*"`)
 	data := expr.ReplaceAll(imageData.Bytes(), []byte("<svg"))
 
-	page := bytes.Replace(pageData, []byte("INSERT_IMAGE_HERE"), data, 1)
-	w.Write(page)
+	listData, _ := json.Marshal(clientList)
+	pageData = bytes.Replace(pageData, []byte("INSERT_IMAGE_HERE"), data, 1)
+	pageData = bytes.Replace(pageData, []byte("INSERT_LIST_HERE"), listData, 1)
+
+	w.Write(pageData)
 
 	LogRequest(r, "planned route for %d entries", len(entries))
 }
@@ -486,6 +494,11 @@ func (s *Server) getClientListItems(r *http.Request) ([]*ClientListItem, error) 
 		return nil, err
 	}
 
+	return listEntriesToClientListItems(store, listEntries)
+}
+
+func listEntriesToClientListItems(store optishop.Store,
+	listEntries []*db.ListEntry) ([]*ClientListItem, error) {
 	results := []*ClientListItem{}
 	for _, entry := range listEntries {
 		invProd, err := store.UnmarshalProduct(entry.Info.InventoryProductData)
@@ -499,7 +512,6 @@ func (s *Server) getClientListItems(r *http.Request) ([]*ClientListItem, error) 
 		}
 		results = append(results, item)
 	}
-
 	return results, nil
 }
 

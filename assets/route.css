@@ -1,0 +1,62 @@
+#route-image, svg {
+    height: calc(100% - 100px);
+    width: 100%;
+}
+
+#top-nav {
+    position: relative;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100px;
+    background-color: white;
+}
+
+#top-item {
+    position: relative;
+    max-width: 580px;
+    display: block;
+    height: 100%;
+    margin: 0 auto;
+}
+
+#top-item::after {
+    content: ' ';
+    display: block;
+    font-size: 0;
+    clear: both;
+}
+
+.list-item {
+    padding: 5px;
+    box-sizing: border-box;
+    position: relative;
+    float: left;
+    width: calc(100% - 80px);
+    background-color: white;
+}
+
+.page-button {
+    float: left;
+    width: 40px;
+    height: 100%;
+    background-color: transparent;
+    background-size: 20px 20px;
+    background-repeat: no-repeat;
+    background-position: center center;
+    cursor: pointer;
+    font-size: 0;
+    color: transparent;
+}
+
+.page-button:hover {
+    background-color: #f0f0f0;
+}
+
+#prev-button {
+    background-image: url('svg/left.svg');
+}
+
+#next-button {
+    background-image: url('svg/right.svg');
+}
