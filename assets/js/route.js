@@ -11,7 +11,6 @@
             this.listItems = LIST_DATA.map((x) => createListItem(x, 'div'));
             this.currentListItem = document.getElementById('current-list-item');
             this.currentIndex = 0;
-            this.showCurrentListItem();
 
             this.prevButton = document.getElementById('prev-button');
             this.prevButton.addEventListener('click', () => {
@@ -19,6 +18,7 @@
                     this.currentIndex--;
                     this.showCurrentListItem();
                 }
+                this.prevButton.blur();
             });
             this.nextButton = document.getElementById('next-button');
             this.nextButton.addEventListener('click', () => {
@@ -26,7 +26,10 @@
                     this.currentIndex++;
                     this.showCurrentListItem();
                 }
+                this.nextButton.blur();
             });
+
+            this.showCurrentListItem();
         }
 
         showCurrentListItem() {
@@ -36,6 +39,17 @@
             next.parentElement.insertBefore(this.currentListItem, next);
 
             this.emphasizeLabel(LIST_DATA[this.currentIndex].zone);
+
+            if (this.currentIndex > 0) {
+                this.prevButton.classList.remove('page-button-disabled');
+            } else {
+                this.prevButton.classList.add('page-button-disabled');
+            }
+            if (this.currentIndex + 1 < this.listItems.length) {
+                this.nextButton.classList.remove('page-button-disabled');
+            } else {
+                this.nextButton.classList.add('page-button-disabled');
+            }
         }
 
         emphasizeLabel(text) {

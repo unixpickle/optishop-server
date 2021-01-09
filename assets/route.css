@@ -28,7 +28,7 @@
 }
 
 .list-item {
-    padding: 5px;
+    padding: 10px;
     box-sizing: border-box;
     position: relative;
     float: left;
@@ -51,6 +51,11 @@
 
 .page-button:hover {
     background-color: #f0f0f0;
+}
+
+.page-button-disabled {
+    opacity: 0.25;
+    pointer-events: none;
 }
 
 #prev-button {
