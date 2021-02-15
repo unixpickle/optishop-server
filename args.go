@@ -7,6 +7,7 @@ type Args struct {
 	DataDir    string
 	Addr       string
 	NumProxies int
+	LocalMode  bool
 }
 
 func (a *Args) Add() {
@@ -15,4 +16,5 @@ func (a *Args) Add() {
 	flag.StringVar(&a.Addr, "addr", ":8080", "address to listen on")
 	flag.IntVar(&a.NumProxies, "proxies", 0, "number of reverse proxies before this endpoint, "+
 		"for rate-limiting")
+	flag.BoolVar(&a.LocalMode, "local", false, "provide a user-free front-end")
 }

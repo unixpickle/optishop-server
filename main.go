@@ -25,7 +25,13 @@ func main() {
 	args.Add()
 	flag.Parse()
 
-	db, err := db.NewFileDB(args.DataDir)
+	var dbInstance db.DB
+	var err error
+	if args.LocalMode {
+		dbInstance, err = db.NewLocalDB(args.DataDir)
+	} else {
+		dbInstance, err = db.NewFileDB(args.DataDir)
+	}
 	essentials.Must(err)
 
 	sources, err := LoadStoreSources()
@@ -34,7 +40,8 @@ func main() {
 	server := &Server{
 		AssetDir:   args.AssetDir,
 		NumProxies: args.NumProxies,
-		DB:         db,
+		LocalMode:  args.LocalMode,
+		DB:         dbInstance,
 		Sources:    sources,
 		StoreCache: NewStoreCache(sources),
 	}
@@ -64,6 +71,7 @@ func main() {
 type Server struct {
 	AssetDir   string
 	NumProxies int
+	LocalMode  bool
 
 	DB         db.DB
 	Sources    map[string]optishop.StoreSource
@@ -297,7 +305,7 @@ func (s *Server) HandleAddItemAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sigKey, err := s.DB.UserMetadata(user, SignatureKey)
+	sigKey, err := s.SignatureKey(user)
 	if err != nil {
 		s.ServeError(w, r, err)
 		return
@@ -366,7 +374,7 @@ func (s *Server) HandleAddStoreAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sigKey, err := s.DB.UserMetadata(user, SignatureKey)
+	sigKey, err := s.SignatureKey(user)
 	if err != nil {
 		s.ServeError(w, r, err)
 		return
@@ -439,7 +447,7 @@ func (s *Server) HandleInventoryQueryAPI(w http.ResponseWriter, r *http.Request)
 	storeID := r.Context().Value(StoreIDKey).(db.StoreID)
 	store := r.Context().Value(StoreKey).(optishop.Store)
 
-	sigKey, err := s.DB.UserMetadata(user, SignatureKey)
+	sigKey, err := s.SignatureKey(user)
 	if err != nil {
 		s.ServeError(w, r, err)
 		return
@@ -593,7 +601,7 @@ func (s *Server) HandleSortAPI(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) HandleStoreQueryAPI(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value(UserKey).(db.UserID)
-	sigKey, err := s.DB.UserMetadata(user, SignatureKey)
+	sigKey, err := s.SignatureKey(user)
 	if err != nil {
 		s.ServeError(w, r, err)
 		return

@@ -43,6 +43,15 @@ func SetAuthCookie(w http.ResponseWriter, user db.UserID, secret string) {
 	})
 }
 
+// SignatureKey gets a user's key for signing data.
+func (s *Server) SignatureKey(user db.UserID) (string, error) {
+	if s.LocalMode {
+		return "", nil
+	} else {
+		return s.DB.UserMetadata(user, SignatureKey)
+	}
+}
+
 // AuthHandler wraps an HTTP handler to ensure that the
 // handler is only called for authenticated requests.
 //
@@ -50,6 +59,10 @@ func SetAuthCookie(w http.ResponseWriter, user db.UserID, secret string) {
 // context.
 func (s *Server) AuthHandler(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if s.LocalMode {
+			f(w, r.WithContext(context.WithValue(r.Context(), UserKey, db.UserID(""))))
+			return
+		}
 		user, ok := checkAuth(s.DB, r)
 		if !ok {
 			if IsAPIRequest(r) {
@@ -68,6 +81,10 @@ func (s *Server) AuthHandler(f http.HandlerFunc) http.HandlerFunc {
 // then there is simply no UserKey in the context.
 func (s *Server) OptionalAuthHandler(f http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if s.LocalMode {
+			f(w, r.WithContext(context.WithValue(r.Context(), UserKey, db.UserID(""))))
+			return
+		}
 		if user, ok := checkAuth(s.DB, r); ok {
 			f(w, r.WithContext(context.WithValue(r.Context(), UserKey, user)))
 		} else {
