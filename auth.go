@@ -87,7 +87,7 @@ func checkAuth(d db.DB, r *http.Request) (db.UserID, bool) {
 	}
 	user := values.Get("user")
 	secret := values.Get("secret")
-	realSecret, err := d.UserMetadata(db.UserID(user), "secret")
+	realSecret, err := d.UserMetadata(db.UserID(user), SecretKey)
 	if err != nil || realSecret != secret {
 		return "", false
 	}
