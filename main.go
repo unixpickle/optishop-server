@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"regexp"
+	"strings"
 	"time"
 
 	svg "github.com/ajstarks/svgo/float"
@@ -238,6 +239,9 @@ func (s *Server) HandleSignup(w http.ResponseWriter, r *http.Request) {
 
 	if r.FormValue("password") != r.FormValue("confirm") {
 		ServeFormError(w, r, errors.New("passwords do not match"))
+		return
+	} else if strings.TrimSpace(r.FormValue("username")) == "" {
+		ServeFormError(w, r, errors.New("username cannot be empty"))
 		return
 	}
 

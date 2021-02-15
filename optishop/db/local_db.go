@@ -17,9 +17,9 @@ func NewLocalDB(path string) (*LocalDB, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "create local DB")
 	}
-	userID, err := fdb.Login("local", "local")
+	userID, err := fdb.Login("", "")
 	if err != nil {
-		userID, err = fdb.CreateUser("local", "local", map[string]string{})
+		userID, err = fdb.CreateUser("", "", map[string]string{})
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "create local DB")
@@ -43,7 +43,7 @@ func (l *LocalDB) Login(username, password string) (UserID, error) {
 }
 
 func (l *LocalDB) Username(user UserID) (string, error) {
-	return "local", nil
+	return "", nil
 }
 
 func (l *LocalDB) UserMetadata(user UserID, field string) (string, error) {
