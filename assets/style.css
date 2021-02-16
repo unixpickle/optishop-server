@@ -761,6 +761,21 @@ button, input[type="submit"] {
     margin-left: 10px;
 }
 
+.stores-header-local {
+    text-align: center;
+}
+
+.stores-header-local .name {
+    display: inline-block;
+    float: none;
+    margin-left: 0;
+    font-weight: bolder;
+}
+
+.stores-header-local .logout {
+    display: none;
+}
+
 .home-header .greeting {
     margin-left: 5px;
 }

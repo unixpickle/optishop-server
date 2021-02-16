@@ -18,7 +18,14 @@
             (function() {
                 const header = document.getElementById('stores-header');
                 const name = header.getElementsByClassName('name')[0];
-                name.textContent = 'Welcome, ' + INSERT_USERNAME;
+                const username = INSERT_USERNAME;
+                if (username) {
+                    name.textContent = 'Welcome, ' + INSERT_USERNAME;
+                } else {
+                    // This is local mode.
+                    name.textContent = 'Optishop';
+                    header.classList.add('stores-header-local');
+                }
             })();
         </script>
         <div class="modify-buttons">
