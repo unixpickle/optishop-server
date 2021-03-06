@@ -1,4 +1,4 @@
-package main
+package serverapi
 
 import (
 	"github.com/unixpickle/optishop-server/optishop"
