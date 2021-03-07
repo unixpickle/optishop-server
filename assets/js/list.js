@@ -43,11 +43,15 @@
         showList() {
             super.showList();
             this.totalPrice.style.display = 'block';
+            this.sortButton.style.display = 'inline-block';
+            this.routeButton.style.display = 'inline-block';
         }
 
         hideList() {
             super.hideList();
             this.totalPrice.style.display = 'none';
+            this.sortButton.style.display = 'none';
+            this.routeButton.style.display = 'none';
         }
 
         dataChanged() {
