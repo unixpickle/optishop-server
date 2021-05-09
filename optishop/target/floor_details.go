@@ -23,7 +23,7 @@ type FloorDetails struct {
 // GetFloorDetails looks up the floor details from the map
 // of a specific floor of a specific store.
 func GetFloorDetails(storeID, floorID string) (*FloorDetails, error) {
-	url := "https://prod.tgtneptune.com/v1/stores/" + storeID + "/maps/svgs/floors/" + floorID
+	url := "https://prod.tgtneptune.com/v2/stores/" + storeID + "/maps/svgs/floors/" + floorID
 	data, err := GetRequest(url)
 	if err != nil {
 		return nil, errors.Wrap(err, "get floor details")
@@ -91,7 +91,7 @@ func parseFloorDetails(data []byte) (*FloorDetails, error) {
 		}
 		result.Aisles[strings.TrimSpace(scrape.Text(text))] = transform.Apply(optishop.Point{
 			X: x,
-			Y: -y,
+			Y: y,
 		})
 	}
 
@@ -122,6 +122,9 @@ func largestPath(paths []optishop.Polygon) optishop.Polygon {
 type coordTransform [6]float64
 
 func parseCoordTransform(transform string) (*coordTransform, error) {
+	if transform == "" {
+		return &coordTransform{1, 0, 0, 1, 0, 0}, nil
+	}
 	if !strings.HasPrefix(transform, "matrix(") || !strings.HasSuffix(transform, ")") {
 		return nil, errors.New("unsupported transform: " + transform)
 	}
