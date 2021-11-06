@@ -11,23 +11,23 @@ import (
 	"golang.org/x/net/html"
 )
 
-type inventoryProduct struct {
+type inventoryProductV1 struct {
 	SearchItem  *SearchItem
 	ShipMethods *ShipMethodsResult
 }
 
-func (i *inventoryProduct) Name() string {
+func (i *inventoryProductV1) Name() string {
 	return html.UnescapeString(i.SearchItem.Title)
 }
 
-func (i *inventoryProduct) PhotoURL() string {
+func (i *inventoryProductV1) PhotoURL() string {
 	for _, img := range i.SearchItem.Images {
 		return img.BaseURL + img.Primary
 	}
 	return ""
 }
 
-func (i *inventoryProduct) Description() string {
+func (i *inventoryProductV1) Description() string {
 	res := html.UnescapeString(i.SearchItem.Description)
 	if res != "" {
 		return cleanupDescriptionHTML(res)
@@ -49,17 +49,65 @@ func cleanupDescriptionHTML(desc string) string {
 	return cleaned
 }
 
-func (i *inventoryProduct) InStock() bool {
+func (i *inventoryProductV1) InStock() bool {
 	return i.ShipMethods != nil && i.ShipMethods.InStore()
 }
 
-func (i *inventoryProduct) Price() string {
+func (i *inventoryProductV1) Price() string {
 	p := i.SearchItem.Price
 	if strings.HasPrefix(p.FormattedCurrentPrice, "$") {
 		return p.FormattedCurrentPrice
 	} else {
 		return fmt.Sprintf("$%0.2f", p.CurrentRetail)
 	}
+}
+
+func (i *inventoryProductV1) TCIN() string {
+	return i.SearchItem.TCIN
+}
+
+type inventoryProductV2 struct {
+	SearchProduct *SearchProduct
+	Fulfillment   *FulfillmentResult
+}
+
+func (i *inventoryProductV2) Name() string {
+	return html.UnescapeString(i.SearchProduct.Item.Description.Title)
+}
+
+func (i *inventoryProductV2) PhotoURL() string {
+	return i.SearchProduct.Item.Enrichment.Images.PrimaryURL
+}
+
+func (i *inventoryProductV2) Description() string {
+	lines := append([]string{}, i.SearchProduct.Item.Description.BulletDescriptions...)
+	lines = append(lines, i.SearchProduct.Item.Description.SoftBullets.Bullets...)
+	dashed := []string{}
+	for _, line := range lines {
+		dashed = append(dashed, "- "+cleanupDescriptionHTML(line))
+	}
+	return strings.Join(dashed, "\n")
+}
+
+func (i *inventoryProductV2) InStock() bool {
+	return i.Fulfillment != nil && i.Fulfillment.InStore()
+}
+
+func (i *inventoryProductV2) Price() string {
+	p := i.SearchProduct.Price
+	if strings.HasPrefix(p.FormattedCurrentPrice, "$") {
+		return p.FormattedCurrentPrice
+	} else {
+		return fmt.Sprintf("$%0.2f", p.CurrentRetail)
+	}
+}
+
+func (i *inventoryProductV2) TCIN() string {
+	return i.SearchProduct.TCIN
+}
+
+type tcinItem interface {
+	TCIN() string
 }
 
 type Store struct {
@@ -102,28 +150,28 @@ func (s *Store) Search(query string) ([]optishop.InventoryProduct, []string, err
 		return nil, nil, err
 	}
 
-	ids := make([]string, len(results.Items.SearchItems))
-	for i, result := range results.Items.SearchItems {
-		ids[i] = result.RepresentativeChildPartNumber
+	ids := make([]string, len(results.Data.Search.Products))
+	for i, result := range results.Data.Search.Products {
+		ids[i] = result.TCIN
 	}
-	shipMethods, err := ShipMethods(s.StoreID, ids)
+	fulfillmentResults, err := s.Client.Fulfillment(s.StoreID, ids)
 	if err != nil {
 		return nil, nil, err
 	}
-	idToShipMethod := map[string]*ShipMethodsResult{}
-	for _, method := range shipMethods {
-		idToShipMethod[method.ProductID] = method
+	idToFulfillment := map[string]*FulfillmentResult{}
+	for _, res := range fulfillmentResults {
+		idToFulfillment[res.TCIN] = res
 	}
 
 	var products []optishop.InventoryProduct
-	for _, res := range results.Items.SearchItems {
-		products = append(products, &inventoryProduct{
-			SearchItem:  res,
-			ShipMethods: idToShipMethod[res.RepresentativeChildPartNumber],
+	for _, res := range results.Data.Search.Products {
+		products = append(products, &inventoryProductV2{
+			SearchProduct: res,
+			Fulfillment:   idToFulfillment[res.TCIN],
 		})
 	}
 
-	return products, results.Suggestions, nil
+	return products, results.Data.Search.Suggestions, nil
 }
 
 func (s *Store) MarshalProduct(prod optishop.InventoryProduct) ([]byte, error) {
@@ -131,11 +179,23 @@ func (s *Store) MarshalProduct(prod optishop.InventoryProduct) ([]byte, error) {
 }
 
 func (s *Store) UnmarshalProduct(data []byte) (optishop.InventoryProduct, error) {
-	var prod inventoryProduct
-	if err := json.Unmarshal(data, &prod); err != nil {
+	var obj map[string]interface{}
+	if err := json.Unmarshal(data, &obj); err != nil {
 		return nil, errors.Wrap(err, "unmarshal product")
 	}
-	return &prod, nil
+	if _, ok := obj["SearchItem"]; ok {
+		var prod inventoryProductV1
+		if err := json.Unmarshal(data, &prod); err != nil {
+			return nil, errors.Wrap(err, "unmarshal product")
+		}
+		return &prod, nil
+	} else {
+		var prod inventoryProductV2
+		if err := json.Unmarshal(data, &prod); err != nil {
+			return nil, errors.Wrap(err, "unmarshal product")
+		}
+		return &prod, nil
+	}
 }
 
 func (s *Store) Layout() *optishop.Layout {
@@ -143,21 +203,15 @@ func (s *Store) Layout() *optishop.Layout {
 }
 
 func (s *Store) Locate(prod optishop.InventoryProduct) (*optishop.Zone, error) {
-	item := prod.(*inventoryProduct).SearchItem
-
-	if loc, err := LocationDetails(item.RepresentativeChildPartNumber, s.StoreID); err == nil {
-		name := strings.Replace(loc.BlockAisle, "-", "", -1)
+	tcin := prod.(tcinItem).TCIN()
+	if res, err := s.Client.SingleFulfillment(s.StoreID, tcin); err != nil {
+		return nil, errors.Wrap(err, "locate product")
+	} else {
+		name := res.ZoneName()
 		zone := s.CachedLayout.Zone(name)
 		if zone == nil {
-			return nil, errors.New("locate product: aisle " + name + " is missing from the map")
+			return nil, errors.New("locate product: position " + name + " is missing from the map")
 		}
 		return zone, nil
 	}
-
-	details, err := s.Client.ProductDetails(item.RepresentativeChildPartNumber, s.StoreID)
-	if err != nil {
-		return nil, err
-	}
-	name := strings.ToLower(details.Product.Item.ProductClassification.ProductTypeName)
-	return s.CachedLayout.Zone(name), nil
 }

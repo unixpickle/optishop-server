@@ -10,6 +10,8 @@ import (
 
 // ShipMethodsResult is the result for a single product in
 // a result from calling ShipMethods.
+//
+// This is a deprecated data structure.
 type ShipMethodsResult struct {
 	ProductID             string `json:"product_id"`
 	AvailabilityStatus    string `json:"availability_status"`
@@ -35,6 +37,8 @@ func (s *ShipMethodsResult) InStore() bool {
 //
 // Each product is identified by its representative child
 // part number.
+//
+// This is deprecated. See Client.Fulfillment().
 func ShipMethods(storeID string, partIDs []string) ([]*ShipMethodsResult, error) {
 	if len(partIDs) == 0 {
 		return nil, nil
