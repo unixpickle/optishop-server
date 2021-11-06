@@ -210,7 +210,20 @@ func (s *Store) Locate(prod optishop.InventoryProduct) (*optishop.Zone, error) {
 		name := res.ZoneName()
 		zone := s.CachedLayout.Zone(name)
 		if zone == nil {
-			return nil, errors.New("locate product: position " + name + " is missing from the map")
+			if v2, ok := prod.(*inventoryProductV2); ok {
+				department, err := ProductDepartment(v2.SearchProduct.Item.Enrichment.BuyURL)
+				if err != nil {
+					return nil, err
+				}
+				zone = s.CachedLayout.Zone(strings.ToLower(department))
+				if zone == nil {
+					return nil, errors.New("locate product: could not find position " + name + " or department " + department)
+				}
+				return zone, nil
+			} else {
+				// Department lookup not available for V1 products.
+				return nil, errors.New("locate product: position " + name + " is missing from the map")
+			}
 		}
 		return zone, nil
 	}

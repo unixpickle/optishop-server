@@ -81,6 +81,7 @@ type SearchProduct struct {
 	Price ProductPrice `json:"price"`
 	Item  struct {
 		Enrichment struct {
+			BuyURL string `json:"buy_url"`
 			Images struct {
 				PrimaryURL string `json:"primary_image_url"`
 			} `json:"images"`
