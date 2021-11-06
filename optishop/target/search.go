@@ -74,6 +74,8 @@ type SearchResults struct {
 	Suggestions []string         `json:"suggestions"`
 }
 
+// SearchProduct is a single resulting product from a
+// search.
 type SearchProduct struct {
 	TCIN  string       `json:"tcin"`
 	Price ProductPrice `json:"price"`
@@ -94,6 +96,8 @@ type SearchProduct struct {
 	} `json:"item"`
 }
 
+// SearchResultsV2 stores the result of searching a store
+// for a product.
 type SearchResultsV2 struct {
 	Data struct {
 		Search struct {
