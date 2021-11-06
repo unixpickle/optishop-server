@@ -1,17 +1,11 @@
 package target
 
-import (
-	"encoding/json"
-	"net/url"
-	"strings"
-
-	"github.com/pkg/errors"
-)
-
-// ShipMethodsResult is the result for a single product in
-// a result from calling ShipMethods.
+// ShipMethodsResult is a legacy data structure describing
+// where and how an item can be purchased or shipped.
 //
-// This is a deprecated data structure.
+// This is only retained because it may be stored in old
+// user accounts, but it will never be returned by an API
+// that fetches information from Target's website.
 type ShipMethodsResult struct {
 	ProductID             string `json:"product_id"`
 	AvailabilityStatus    string `json:"availability_status"`
@@ -30,57 +24,4 @@ func (s *ShipMethodsResult) InStore() bool {
 		}
 	}
 	return false
-}
-
-// ShipMethods gets shipping information for a list of
-// products.
-//
-// Each product is identified by its representative child
-// part number.
-//
-// This is deprecated. See Client.Fulfillment().
-func ShipMethods(storeID string, partIDs []string) ([]*ShipMethodsResult, error) {
-	if len(partIDs) == 0 {
-		return nil, nil
-	}
-
-	joined := strings.Join(partIDs, ",")
-	q := url.Values{}
-
-	// Dummy values for unused shipping options.
-	q.Set("latitude", "0")
-	q.Set("longitude", "0")
-	q.Set("zip", "19072")
-	q.Set("state", "PA")
-
-	q.Set("storeId", storeID)
-	q.Set("channel", "web")
-
-	u := "https://redsky.target.com/v1/ship_methods/aggregator/" + joined + "?" + q.Encode()
-	data, err := GetRequest(u)
-	if err != nil {
-		return nil, errors.Wrap(err, "ship methods")
-	}
-
-	var response []struct {
-		Product struct {
-			ShipMethods *ShipMethodsResult `json:"ship_methods"`
-		} `json:"product"`
-	}
-	if err := json.Unmarshal(data, &response); err != nil {
-		// If there's only one result, the response may
-		// be bare, not in an array.
-		if json.Unmarshal([]byte("["+string(data)+"]"), &response) != nil {
-			return nil, errors.Wrap(err, "ship methods")
-		}
-	}
-
-	var results []*ShipMethodsResult
-	for _, obj := range response {
-		if obj.Product.ShipMethods != nil {
-			results = append(results, obj.Product.ShipMethods)
-		}
-	}
-
-	return results, nil
 }
