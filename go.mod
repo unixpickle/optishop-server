@@ -10,6 +10,6 @@ require (
 	github.com/unixpickle/num-analysis v0.0.0-20161229165253-c45203c63047 // indirect
 	github.com/unixpickle/ratelimit v0.0.0-20161206004203-0d3030c2f8fb
 	github.com/yhat/scrape v0.0.0-20161128144610-24b7890b0945
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
-	golang.org/x/net v0.0.0-20201224014010-6772e930b67b
+	golang.org/x/crypto v0.1.0
+	golang.org/x/net v0.1.0
 )
